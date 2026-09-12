@@ -1,0 +1,121 @@
+import { prisma } from "../db/prisma";
+
+export type ConceptStatus = "NEEDS_ATTENTION" | "DEVELOPING" | "STRONG";
+
+export function classifyStatus(score: number): ConceptStatus {
+  if (score >= 75) return "STRONG";
+  if (score >= 50) return "DEVELOPING";
+  return "NEEDS_ATTENTION";
+}
+
+export interface MasteryUpdateResult {
+  conceptId: string;
+  conceptName: string;
+  previousScore: number;
+  newScore: number;
+  status: ConceptStatus;
+  trend: "Improving" | "Declining" | "Stable";
+}
+
+/**
+ * Updates concept mastery based on quiz performance, records history,
+ * and generates fresh learning recommendations.
+ */
+export async function updateConceptMastery(params: {
+  conceptId: string;
+  userId: string;
+  projectId: string;
+  performancePercentage: number; // 0 to 100
+  reason: "QUIZ_MCQ" | "OPEN_ENDED_ASSESSMENT";
+}): Promise<MasteryUpdateResult | null> {
+  const { conceptId, userId, projectId, performancePercentage, reason } = params;
+
+  const concept = await prisma.concept.findUnique({
+    where: { id: conceptId },
+  });
+
+  if (!concept) return null;
+
+  const previousScore = concept.masteryScore;
+  // Weighted exponential moving average (60% weight on new evidence, 40% on previous)
+  const newScore = parseFloat(
+    (previousScore * 0.4 + performancePercentage * 0.6).toFixed(1)
+  );
+  const status = classifyStatus(newScore);
+
+  let trend: "Improving" | "Declining" | "Stable" = "Stable";
+  if (newScore > previousScore + 2) trend = "Improving";
+  else if (newScore < previousScore - 2) trend = "Declining";
+
+  // 1. Update concept
+  await prisma.concept.update({
+    where: { id: conceptId },
+    data: {
+      masteryScore: newScore,
+      status,
+    },
+  });
+
+  // 2. Persist MasteryHistory
+  await prisma.masteryHistory.create({
+    data: {
+      conceptId: concept.id,
+      userId,
+      score: newScore,
+      previousScore,
+      delta: parseFloat((newScore - previousScore).toFixed(1)),
+      reason,
+    },
+  });
+
+  // 3. Log MASTERY_UPDATED activity event
+  await prisma.activityEvent.create({
+    data: {
+      userId,
+      projectId,
+      type: "MASTERY_UPDATED",
+      description: `Mastery for "${concept.name}" updated to ${newScore}% (${status}).`,
+    },
+  });
+
+  // 4. Generate next actionable recommendation based on mastery tier
+  let recText = "";
+  if (newScore < 50) {
+    recText = `Your understanding of ${concept.name} is at ${Math.round(
+      newScore
+    )}%. Review the relevant study materials and take a targeted quiz.`;
+  } else if (newScore < 75) {
+    recText = `Good progress on ${concept.name} (${Math.round(
+      newScore
+    )}%). Continue practicing with adaptive assessments to reach strong mastery.`;
+  } else {
+    recText = `You have achieved strong mastery in ${concept.name} (${Math.round(
+      newScore
+    )}%). Advance to review subsequent topics or test comprehensive edge cases.`;
+  }
+
+  // Deactivate older recommendations for this project
+  await prisma.recommendation.updateMany({
+    where: { projectId, status: "ACTIVE" },
+    data: { status: "COMPLETED" },
+  });
+
+  // Insert fresh active recommendation
+  await prisma.recommendation.create({
+    data: {
+      projectId,
+      conceptId: concept.id,
+      text: recText,
+      status: "ACTIVE",
+    },
+  });
+
+  return {
+    conceptId: concept.id,
+    conceptName: concept.name,
+    previousScore,
+    newScore,
+    status,
+    trend,
+  };
+}

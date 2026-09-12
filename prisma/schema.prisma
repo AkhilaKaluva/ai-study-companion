@@ -1,0 +1,304 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  name         String
+  passwordHash String
+  role         String         @default("student") // "student" | "admin"
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     Session[]
+  spaces       Space[]
+  projects     Project[]
+  quizAttempts QuizAttempt[]
+  assessments  AssessmentAttempt[]
+  masteryLogs  MasteryHistory[]
+  activities   ActivityEvent[]
+  aiLogs       AiLog[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+model Space {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects    Project[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Project {
+  id              String             @id @default(uuid())
+  name            String
+  description     String?
+  learningGoal    String
+  spaceId         String
+  space           Space              @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  materials       Material[]
+  concepts        Concept[]
+  conversations   Conversation[]
+  quizzes         Quiz[]
+  assessments     AssessmentAttempt[]
+  recommendations Recommendation[]
+  activities      ActivityEvent[]
+  aiLogs          AiLog[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([spaceId])
+}
+
+model Material {
+  id           String          @id @default(uuid())
+  name         String
+  filePath     String
+  fileSizeBytes Int            @default(0)
+  pageCount    Int             @default(0)
+  status       String          @default("QUEUED") // QUEUED | PROCESSING | EXTRACTING | READY | FAILED
+  errorMessage String?
+  projectId    String
+  project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  chunks       MaterialChunk[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([projectId])
+}
+
+model MaterialChunk {
+  id         String   @id @default(uuid())
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  pageNumber Int
+  chunkIndex Int
+  content    String
+  embedding  String   // JSON string of Float[]
+  createdAt  DateTime @default(now())
+
+  @@index([materialId])
+}
+
+model Concept {
+  id            String         @id @default(uuid())
+  name          String
+  description   String
+  masteryScore  Float          @default(0.0) // 0.0 to 100.0
+  status        String         @default("NEEDS_ATTENTION") // NEEDS_ATTENTION | DEVELOPING | STRONG
+  projectId     String
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  quizQuestions QuizQuestion[]
+  masteryLogs   MasteryHistory[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([projectId])
+}
+
+model MasteryHistory {
+  id            String   @id @default(uuid())
+  conceptId     String
+  concept       Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score         Float
+  previousScore Float
+  delta         Float
+  reason        String   // "QUIZ_MCQ" | "OPEN_ENDED_ASSESSMENT" | "INITIAL_ESTIMATE"
+  createdAt     DateTime @default(now())
+
+  @@index([conceptId])
+  @@index([userId])
+}
+
+model Conversation {
+  id        String        @id @default(uuid())
+  title     String        @default("Tutor Session")
+  projectId String
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([projectId])
+}
+
+model ChatMessage {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       // "user" | "assistant"
+  content        String
+  citations      String?      // JSON string of [{ materialName, pageNumber, snippet }]
+  isUnsupported  Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+model Quiz {
+  id        String         @id @default(uuid())
+  title     String
+  projectId String
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+  createdAt DateTime       @default(now())
+
+  @@index([projectId])
+}
+
+model QuizQuestion {
+  id            String  @id @default(uuid())
+  quizId        String
+  quiz          Quiz    @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  conceptId     String
+  concept       Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  type          String  // "MCQ" | "OPEN_ENDED"
+  prompt        String
+  options       String? // JSON string: '["Option A", "Option B", ...]'
+  correctAnswer String? // For MCQ
+  explanation   String?
+  rubric        String? // Evaluation rubric for open-ended grading
+
+  @@index([quizId])
+  @@index([conceptId])
+}
+
+model QuizAttempt {
+  id        String   @id @default(uuid())
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score     Float    // 0.0 to 100.0
+  answers   String   // JSON string of [{ questionId, userAnswer, isCorrect, feedback, scoreDelta }]
+  createdAt DateTime @default(now())
+
+  @@index([quizId])
+  @@index([userId])
+}
+
+model AssessmentAttempt {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conceptId     String?
+  prompt        String
+  studentAnswer String
+  score         Float    // 0.0 to 100.0
+  feedback      String
+  strengths     String?  // JSON string of string[]
+  weaknesses    String?  // JSON string of string[]
+  createdAt     DateTime @default(now())
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Recommendation {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  text      String
+  conceptId String?
+  status    String   @default("ACTIVE") // ACTIVE | DISMISSED | COMPLETED
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model ActivityEvent {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  type        String   // "SIGNUP" | "LOGIN" | "SPACE_CREATED" | "PROJECT_CREATED" | "MATERIAL_UPLOADED" | "MATERIAL_PROCESSED" | "TUTOR_QUESTION" | "QUIZ_COMPLETED" | "ASSESSMENT_SUBMITTED" | "MASTERY_UPDATED"
+  description String
+  metadata    String?  // JSON string
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model AiLog {
+  id               String   @id @default(uuid())
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  projectId        String?
+  project          Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  feature          String   // "TUTOR_CHAT" | "CONCEPT_EXTRACTION" | "QUIZ_GEN" | "AI_GRADING" | "RECOMMENDATION" | "EVAL"
+  model            String   // "gemini-2.5-flash"
+  latencyMs        Int
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int      @default(0)
+  estimatedCost    Float
+  success          Boolean  @default(true)
+  errorMessage     String?
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model EvaluationRun {
+  id         String             @id @default(uuid())
+  name       String
+  status     String             @default("COMPLETED") // RUNNING | COMPLETED | FAILED
+  passCount  Int                @default(0)
+  failCount  Int                @default(0)
+  totalCount Int                @default(0)
+  durationMs Int                @default(0)
+  details    String?            // JSON summary
+  results    EvaluationResult[]
+  createdAt  DateTime           @default(now())
+}
+
+model EvaluationResult {
+  id           String        @id @default(uuid())
+  runId        String
+  run          EvaluationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  testName     String
+  category     String        // "GROUNDEDNESS" | "CITATIONS" | "REFUSAL" | "QUIZ_GEN" | "GRADING"
+  status       String        // "PASS" | "FAIL"
+  score        Float         @default(1.0)
+  input        String
+  expected     String
+  actual       String
+  latencyMs    Int
+  errorMessage String?
+  createdAt    DateTime      @default(now())
+
+  @@index([runId])
+}
