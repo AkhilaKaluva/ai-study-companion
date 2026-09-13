@@ -8,7 +8,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, email, password, confirmPassword } = body;
 
-    // 1. Validation
     if (!name || !email || !password || !confirmPassword) {
       return NextResponse.json(
         { error: "All fields are required." },
@@ -48,7 +47,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Check email uniqueness
     const existing = await prisma.user.findUnique({
       where: { email: trimmedEmail },
     });
@@ -60,7 +58,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Create user (all public signups are students)
     const passwordHash = hashPassword(password);
     const user = await prisma.user.create({
       data: {
@@ -77,10 +74,8 @@ export async function POST(request: Request) {
       },
     });
 
-    // 4. Create session and set HTTP-only cookie
     await createSession(user.id);
 
-    // 5. Track SIGNUP event
     await prisma.activityEvent.create({
       data: {
         userId: user.id,

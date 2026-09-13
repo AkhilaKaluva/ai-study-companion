@@ -1,4 +1,3 @@
-// Google Gemini API integration service
 import { GoogleGenAI } from "@google/genai";
 import {
   TUTOR_SYSTEM_PROMPT,
@@ -9,13 +8,24 @@ import {
 } from "./prompts";
 import { logAiCall } from "./telemetry";
 
-function getGenAI() {
+export function getGenAI() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey.trim() === "" || apiKey === "your-gemini-api-key-here") {
     return null;
   }
   return new GoogleGenAI({ apiKey });
 }
+
+export function requireGenAI(): GoogleGenAI {
+  const ai = getGenAI();
+  if (!ai) {
+    throw new Error("GEMINI_API_KEY is not configured. Please set a valid GEMINI_API_KEY in your .env file.");
+  }
+  return ai;
+}
+
+export const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+export const FALLBACK_MODEL = "gemini-3.7-flash";
 
 export interface GroundedTutorRequest {
   userMessage: string;
@@ -42,9 +52,6 @@ export interface GroundedTutorResponse {
   completionTokens: number;
 }
 
-/**
- * Clean JSON strings that might have markdown code block wrappers
- */
 function parseCleanJson<T>(raw: string, fallback: T): T {
   try {
     const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
@@ -68,135 +75,45 @@ export interface TutorStreamChunk {
   error?: string;
 }
 
-/**
- * AI Tutor Grounded Q&A Streaming Generator
- */
 export async function* askGroundedTutorStream(
   params: GroundedTutorRequest & { abortSignal?: AbortSignal }
 ): AsyncGenerator<TutorStreamChunk, GroundedTutorResponse, void> {
   const startTime = Date.now();
-  const ai = getGenAI();
+  const ai = requireGenAI();
 
-  // If no context was retrieved (e.g. low similarity or empty material), trigger refusal immediately
-  if (!params.contextChunks || params.contextChunks.length === 0) {
-    const reply =
-      "Based on the uploaded materials in this project, there is insufficient evidence to answer this question. Please upload relevant materials or consult your course texts for this topic.";
-    const latencyMs = Date.now() - startTime;
-    await logAiCall({
-      userId: params.userId,
-      feature: "TUTOR_CHAT",
-      model: ai ? "gemini-2.5-flash" : "gemini-2.5-flash (demo-mode)",
-      latencyMs,
-      promptTokens: 100,
-      completionTokens: 35,
-      success: true,
-    });
-    const chunks = reply.match(/.{1,35}(\s+|$)/g) || [reply];
-    for (const chunk of chunks) {
-      yield { type: "token", text: chunk };
-    }
-    yield { type: "sources", citations: [], isUnsupported: true };
-    return {
-      reply,
-      citations: [],
-      isUnsupported: true,
-      latencyMs,
-      promptTokens: 100,
-      completionTokens: 35,
-    };
-  }
+  let systemInstruction = "";
+  if (params.contextChunks && params.contextChunks.length > 0) {
+    const formattedContext = params.contextChunks
+      .map(
+        (c, i) =>
+          `[CHUNK ${i + 1}] Source: "${c.materialName}", Page ${c.pageNumber}\nContent: ${c.content}`
+      )
+      .join("\n\n---\n\n");
 
-  // Build context payload
-  const formattedContext = params.contextChunks
-    .map(
-      (c, i) =>
-        `[CHUNK ${i + 1}] Source: "${c.materialName}", Page ${c.pageNumber}\nContent: ${c.content}`
-    )
-    .join("\n\n---\n\n");
-
-  const systemInstruction = `${TUTOR_SYSTEM_PROMPT}
+    systemInstruction = `${TUTOR_SYSTEM_PROMPT}
 
 Active Project Learning Goal: "${params.learningGoal || "General Mastery"}"
 
 SUPPORTING EVIDENCE RETRIEVED FROM PROJECT:
 ${formattedContext}
+
+NOTE ON EVIDENCE USAGE:
+If the student's question relates to these project materials, ground your answer in them and include the exact citations [Document Name, Page X]. If the question asks to explain a general algorithmic, programming, or foundational concept not present in these excerpts, explain it clearly and helpfully using standard educational principles.
 `;
+  } else {
+    systemInstruction = `${TUTOR_SYSTEM_PROMPT}
 
-  if (!ai) {
-    // Offline/Demo Fallback
-    const userQ = params.userMessage.toLowerCase();
-    const isOutOfScope =
-      userQ.includes("quantum") ||
-      userQ.includes("france") ||
-      userQ.includes("photosynthesis") ||
-      userQ.includes("ethanol") ||
-      userQ.includes("capital") ||
-      userQ.includes("biryani");
+Active Project Learning Goal: "${params.learningGoal || "General Mastery"}"
 
-    if (isOutOfScope) {
-      const reply =
-        "Based on the uploaded materials in this project, there is insufficient evidence to answer this question. Please upload relevant materials or consult your course texts for this topic.";
-      const latencyMs = Date.now() - startTime;
-      await logAiCall({
-        userId: params.userId,
-        feature: "TUTOR_CHAT",
-        model: "gemini-2.5-flash (demo-mode)",
-        latencyMs,
-        promptTokens: 200,
-        completionTokens: 40,
-        success: true,
-      });
+SUPPORTING EVIDENCE RETRIEVED FROM PROJECT:
+(No matching document excerpts were found in the uploaded project materials.)
 
-      const chunks = reply.match(/.{1,35}(\s+|$)/g) || [reply];
-      for (const chunk of chunks) {
-        yield { type: "token", text: chunk };
-      }
-      yield { type: "sources", citations: [], isUnsupported: true };
-      return {
-        reply,
-        citations: [],
-        isUnsupported: true,
-        latencyMs,
-        promptTokens: 200,
-        completionTokens: 40,
-      };
-    }
-
-    const firstChunk = params.contextChunks[0];
-    const reply = `Based on the provided materials, here is an overview:\n\n${firstChunk.content.slice(0, 250)}...\n\nReference: [${firstChunk.materialName}, Page ${firstChunk.pageNumber}]`;
-    const latencyMs = Date.now() - startTime;
-    await logAiCall({
-      userId: params.userId,
-      feature: "TUTOR_CHAT",
-      model: "gemini-2.5-flash (demo-mode)",
-      latencyMs,
-      promptTokens: 450,
-      completionTokens: 90,
-      success: true,
-    });
-
-    const citations = [
-      {
-        materialName: firstChunk.materialName,
-        pageNumber: firstChunk.pageNumber,
-        snippet: firstChunk.content.slice(0, 120),
-      },
-    ];
-
-    const chunks = reply.match(/.{1,35}(\s+|$)/g) || [reply];
-    for (const chunk of chunks) {
-      yield { type: "token", text: chunk };
-    }
-    yield { type: "sources", citations, isUnsupported: false };
-    return {
-      reply,
-      citations,
-      isUnsupported: false,
-      latencyMs,
-      promptTokens: 450,
-      completionTokens: 90,
-    };
+INSTRUCTION FOR UNGROUNDED/GENERAL QUERIES:
+If the student asks a general learning or conceptual question (e.g., explaining a concept, algorithm, or methodology), provide a clear, educational, structured explanation using your knowledge. Mention that no project documents matched so specific page citations are unavailable, and invite them to upload related course texts to ground further discussion. If they ask about specific project facts that cannot be known without project materials, state that insufficient evidence was found in the project.
+`;
   }
+
+  let activeModel = PRIMARY_MODEL;
 
   try {
     const contents: any[] = [];
@@ -213,32 +130,66 @@ ${formattedContext}
       parts: [{ text: params.userMessage }],
     });
 
-    const responseStream = await ai.models.generateContentStream({
-      model: "gemini-2.5-flash",
-      contents,
-      config: {
-        systemInstruction,
-        temperature: 0.2, // Low temperature for high groundedness
-        ...(params.abortSignal ? { abortSignal: params.abortSignal } : {}),
-      },
-    });
+    let responseStream: any;
+
+    try {
+      responseStream = await ai.models.generateContentStream({
+        model: activeModel,
+        contents,
+        config: {
+          systemInstruction,
+          temperature: 0.2, // Low temperature for high groundedness
+          ...(params.abortSignal ? { abortSignal: params.abortSignal } : {}),
+        },
+      });
+    } catch (primaryErr: any) {
+      const msg = String(primaryErr?.message || "");
+      if (
+        msg.includes("429") ||
+        msg.includes("quota") ||
+        msg.includes("RESOURCE_EXHAUSTED") ||
+        msg.includes("503") ||
+        msg.includes("UNAVAILABLE")
+      ) {
+        console.warn(`[AI Tutor] Primary model ${PRIMARY_MODEL} rate-limited or busy. Falling back to ${FALLBACK_MODEL}...`);
+        activeModel = FALLBACK_MODEL;
+        responseStream = await ai.models.generateContentStream({
+          model: activeModel,
+          contents,
+          config: {
+            systemInstruction,
+            temperature: 0.2,
+            ...(params.abortSignal ? { abortSignal: params.abortSignal } : {}),
+          },
+        });
+      } else {
+        throw primaryErr;
+      }
+    }
 
     let accumulatedReply = "";
     let promptTokens = 600;
     let completionTokens = 200;
 
-    for await (const chunk of responseStream) {
-      if (params.abortSignal?.aborted) {
-        break;
+    try {
+      for await (const chunk of responseStream) {
+        if (params.abortSignal?.aborted) {
+          break;
+        }
+        const text = chunk.text;
+        if (text) {
+          accumulatedReply += text;
+          yield { type: "token", text };
+        }
+        if (chunk.usageMetadata) {
+          promptTokens = chunk.usageMetadata.promptTokenCount || promptTokens;
+          completionTokens = chunk.usageMetadata.candidatesTokenCount || completionTokens;
+        }
       }
-      const text = chunk.text;
-      if (text) {
-        accumulatedReply += text;
-        yield { type: "token", text };
-      }
-      if (chunk.usageMetadata) {
-        promptTokens = chunk.usageMetadata.promptTokenCount || promptTokens;
-        completionTokens = chunk.usageMetadata.candidatesTokenCount || completionTokens;
+    } catch (iterErr: any) {
+      console.warn("Stream iteration interrupted:", iterErr);
+      if (!accumulatedReply) {
+        throw iterErr;
       }
     }
 
@@ -248,7 +199,7 @@ ${formattedContext}
     await logAiCall({
       userId: params.userId,
       feature: "TUTOR_CHAT",
-      model: "gemini-2.5-flash",
+      model: activeModel,
       latencyMs,
       promptTokens,
       completionTokens,
@@ -260,14 +211,16 @@ ${formattedContext}
       reply.toLowerCase().includes("not supported by");
 
     const citations: Array<{ materialName: string; pageNumber: number; snippet: string }> = [];
-    for (const chunk of params.contextChunks) {
-      const tag = `[${chunk.materialName}, Page ${chunk.pageNumber}]`;
-      if (reply.includes(tag) || reply.includes(`Page ${chunk.pageNumber}`)) {
-        citations.push({
-          materialName: chunk.materialName,
-          pageNumber: chunk.pageNumber,
-          snippet: chunk.content.slice(0, 160),
-        });
+    if (params.contextChunks) {
+      for (const chunk of params.contextChunks) {
+        const tag = `[${chunk.materialName}, Page ${chunk.pageNumber}]`;
+        if (reply.includes(tag) || reply.includes(`Page ${chunk.pageNumber}`)) {
+          citations.push({
+            materialName: chunk.materialName,
+            pageNumber: chunk.pageNumber,
+            snippet: chunk.content.slice(0, 160),
+          });
+        }
       }
     }
 
@@ -282,24 +235,21 @@ ${formattedContext}
       completionTokens,
     };
   } catch (err: any) {
-    console.error("Gemini Tutor Chat streaming error:", err);
-    const reply = "An error occurred while communicating with the AI Tutor. Please try again.";
-    yield { type: "token", text: reply };
-    yield { type: "sources", citations: [], isUnsupported: false };
-    return {
-      reply,
-      citations: [],
-      isUnsupported: false,
+    console.error("Gemini Tutor Chat error:", err);
+    await logAiCall({
+      userId: params.userId,
+      feature: "TUTOR_CHAT",
+      model: activeModel,
       latencyMs: Date.now() - startTime,
       promptTokens: 0,
       completionTokens: 0,
-    };
+      success: false,
+      errorMessage: err.message || "Gemini API error",
+    });
+    throw err;
   }
 }
 
-/**
- * AI Tutor Grounded Q&A (Buffered backward-compatible wrapper)
- */
 export async function askGroundedTutor(params: GroundedTutorRequest): Promise<GroundedTutorResponse> {
   const stream = askGroundedTutorStream(params);
   let next = await stream.next();
@@ -309,9 +259,6 @@ export async function askGroundedTutor(params: GroundedTutorRequest): Promise<Gr
   return next.value;
 }
 
-/**
- * Extract 4-6 concepts from document text
- */
 export async function extractConceptsFromText(
   documentText: string,
   userId?: string
@@ -332,7 +279,7 @@ export async function extractConceptsFromText(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       contents: [
         {
           role: "user",
@@ -350,7 +297,7 @@ export async function extractConceptsFromText(
     await logAiCall({
       userId,
       feature: "CONCEPT_EXTRACTION",
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       latencyMs,
       promptTokens: response.usageMetadata?.promptTokenCount || 1200,
       completionTokens: response.usageMetadata?.candidatesTokenCount || 300,
@@ -364,9 +311,6 @@ export async function extractConceptsFromText(
   }
 }
 
-/**
- * Generate 3-question targeted quiz
- */
 export async function generateTargetedQuiz(params: {
   concepts: Array<{ id: string; name: string; description: string }>;
   contextText: string;
@@ -426,7 +370,7 @@ export async function generateTargetedQuiz(params: {
   try {
     const conceptsSummary = params.concepts.map((c) => `- ${c.name}: ${c.description}`).join("\n");
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       contents: [
         {
           role: "user",
@@ -450,7 +394,7 @@ export async function generateTargetedQuiz(params: {
     await logAiCall({
       userId: params.userId,
       feature: "QUIZ_GEN",
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       latencyMs,
       promptTokens: response.usageMetadata?.promptTokenCount || 1100,
       completionTokens: response.usageMetadata?.candidatesTokenCount || 400,
@@ -480,9 +424,6 @@ export async function generateTargetedQuiz(params: {
   }
 }
 
-/**
- * Grade student's open-ended answer
- */
 export async function gradeOpenEndedAnswer(params: {
   prompt: string;
   studentAnswer: string;
@@ -509,7 +450,7 @@ export async function gradeOpenEndedAnswer(params: {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       contents: [
         {
           role: "user",
@@ -529,7 +470,7 @@ export async function gradeOpenEndedAnswer(params: {
     await logAiCall({
       userId: params.userId,
       feature: "AI_GRADING",
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       latencyMs,
       promptTokens: response.usageMetadata?.promptTokenCount || 650,
       completionTokens: response.usageMetadata?.candidatesTokenCount || 200,
@@ -543,9 +484,6 @@ export async function gradeOpenEndedAnswer(params: {
   }
 }
 
-/**
- * Generate 1-sentence next learning recommendation
- */
 export async function generateNextRecommendation(params: {
   projectName: string;
   weakestConcept: { name: string; masteryScore: number };
@@ -563,7 +501,7 @@ export async function generateNextRecommendation(params: {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       contents: [
         {
           role: "user",
@@ -580,7 +518,7 @@ export async function generateNextRecommendation(params: {
     await logAiCall({
       userId: params.userId,
       feature: "TUTOR_CHAT",
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       latencyMs,
       promptTokens: response.usageMetadata?.promptTokenCount || 400,
       completionTokens: response.usageMetadata?.candidatesTokenCount || 60,

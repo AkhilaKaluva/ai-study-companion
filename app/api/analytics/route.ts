@@ -12,7 +12,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get("projectId");
 
-    // If projectId is provided, return Project-Scoped Analytics
     if (projectId) {
       const project = await prisma.project.findFirst({
         where: {
@@ -85,7 +84,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Global User Analytics (across all spaces and projects)
     const spaces = await prisma.space.findMany({
       where: { userId: user.id },
       include: {

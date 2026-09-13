@@ -54,7 +54,6 @@ export async function GET() {
       }),
     ]);
 
-    // Aggregate token and cost metrics
     const totalTokens = aiLogs.reduce(
       (sum, l) => sum + l.promptTokens + l.completionTokens,
       0

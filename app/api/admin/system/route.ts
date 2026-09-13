@@ -12,7 +12,6 @@ export async function GET() {
 
     const checks: Record<string, any> = {};
 
-    // 1. Database Check
     const dbStart = Date.now();
     try {
       await prisma.user.findFirst({ select: { id: true } });
@@ -29,7 +28,6 @@ export async function GET() {
       };
     }
 
-    // 2. AI Provider Check
     const apiKey = process.env.GEMINI_API_KEY;
     const hasKey = apiKey && apiKey.trim() !== "" && apiKey !== "your-gemini-api-key-here";
     checks.geminiProvider = {
@@ -40,7 +38,6 @@ export async function GET() {
         : "Gemini API key not found in .env. Operating in resilient deterministic mode.",
     };
 
-    // 3. PDF Ingestion Engine
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const pdfParse = require("pdf-parse/lib/pdf-parse.js");
@@ -55,7 +52,6 @@ export async function GET() {
       };
     }
 
-    // 4. Vector Embedding Engine
     const embStart = Date.now();
     try {
       const vec = await getEmbedding("System health check query");

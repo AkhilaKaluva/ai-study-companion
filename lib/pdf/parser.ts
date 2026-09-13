@@ -1,5 +1,3 @@
-// PDF parser that extracts text page-by-page and chunks with metadata preservation
-// Using pdf-parse with custom page render hook
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse/lib/pdf-parse.js");
@@ -22,9 +20,6 @@ export interface ParsedDocument {
   chunks: DocumentChunkOutput[];
 }
 
-/**
- * Extracts text from PDF buffer preserving page numbers, then chunks each page.
- */
 export async function parseAndChunkPdf(
   buffer: Buffer,
   maxWordsPerChunk: number = 250,
@@ -49,10 +44,8 @@ export async function parseAndChunkPdf(
 
   const parsed = await pdfParse(buffer, options);
 
-  // Sort pages by page number just in case
   pages.sort((a, b) => a.pageNumber - b.pageNumber);
 
-  // Now create page-bounded chunks
   const chunks: DocumentChunkOutput[] = [];
   let globalChunkIndex = 0;
 

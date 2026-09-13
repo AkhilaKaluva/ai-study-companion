@@ -95,7 +95,6 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 transition-colors">
-      {/* Admin Top Header */}
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -131,7 +130,6 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        {/* System Health Indicators Bar */}
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-xs font-semibold">
           <span className="text-slate-400 uppercase tracking-wider text-[10px]">
             System Diagnostics:
@@ -154,7 +152,6 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* Global Statistics Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
             <div className="text-xs text-slate-500 dark:text-slate-400">Total Users</div>
@@ -205,7 +202,6 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* Quick Admin Navigation Tabs / Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
             href="/admin/users"
@@ -264,7 +260,6 @@ export default function AdminOverviewPage() {
           </Link>
         </div>
 
-        {/* Real Platform Activity Timeline */}
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">

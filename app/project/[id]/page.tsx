@@ -42,7 +42,6 @@ export default function ProjectWorkspacePage({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "materials" | "explorer">("overview");
 
-  // Knowledge Explorer search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -82,18 +81,15 @@ export default function ProjectWorkspacePage({
     setSearchError(null);
   };
 
-  // Upload state
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [pageCount, setPageCount] = useState<number | undefined>();
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Delete Material confirmation state
   const [materialToDelete, setMaterialToDelete] = useState<any | null>(null);
   const [deletingMaterial, setDeletingMaterial] = useState(false);
   const [deleteMaterialError, setDeleteMaterialError] = useState<string | null>(null);
 
-  // PDF Viewer & Chunk Inspection state
   const [viewingMaterial, setViewingMaterial] = useState<any | null>(null);
   const [inspectingMaterial, setInspectingMaterial] = useState<any | null>(null);
   const [chunkData, setChunkData] = useState<{ material?: any; chunks?: any[] } | null>(null);
@@ -169,7 +165,6 @@ export default function ProjectWorkspacePage({
     }
   };
 
-  // Edit Project state
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -280,9 +275,8 @@ export default function ProjectWorkspacePage({
         return;
       }
 
-      // Poll material status until READY or FAILED
       let attempts = 0;
-      const maxAttempts = 60; // 90 seconds timeout
+      const maxAttempts = 60;
       const poll = async () => {
         attempts++;
         try {
@@ -364,7 +358,6 @@ export default function ProjectWorkspacePage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16 transition-colors">
-      {/* Workspace Header */}
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <Link
@@ -390,7 +383,6 @@ export default function ProjectWorkspacePage({
               </p>
             </div>
 
-            {/* Quick Action Navigation Bar */}
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -431,7 +423,6 @@ export default function ProjectWorkspacePage({
             </div>
           </div>
 
-          {/* Sub Navigation Tabs */}
           <div className="flex items-center gap-4 mt-6 border-b border-slate-100 dark:border-slate-800 text-xs font-semibold">
             <button
               onClick={() => setActiveTab("overview")}
@@ -469,7 +460,6 @@ export default function ProjectWorkspacePage({
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        {/* Next Recommendation Banner */}
         {latestRecommendation && (
           <div className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-r from-indigo-50/90 via-white to-purple-50/70 dark:from-indigo-950/40 dark:via-slate-900 dark:to-purple-950/30 p-5 sm:p-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -492,10 +482,8 @@ export default function ProjectWorkspacePage({
           </div>
         )}
 
-        {/* Tab 1: Workspace Overview */}
         {activeTab === "overview" && (
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Concept Mastery Map */}
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -543,7 +531,6 @@ export default function ProjectWorkspacePage({
               )}
             </div>
 
-            {/* Right Column: Project Highlights & Upload Quick Access */}
             <div className="space-y-6">
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -616,7 +603,6 @@ export default function ProjectWorkspacePage({
                 </button>
               </div>
 
-              {/* Tutor & Quiz Quick Cards */}
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-3">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Continuous Learning Loop</h3>
                 <div className="space-y-2">
@@ -645,10 +631,8 @@ export default function ProjectWorkspacePage({
           </div>
         )}
 
-        {/* Tab 2: Materials & Ingestion */}
         {activeTab === "materials" && (
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Upload Area */}
             <div className="space-y-6">
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -688,7 +672,6 @@ export default function ProjectWorkspacePage({
               </div>
             </div>
 
-            {/* Materials List */}
             <div className="lg:col-span-2 space-y-4">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 Indexed Materials ({project.materials?.length || 0})
@@ -783,10 +766,8 @@ export default function ProjectWorkspacePage({
           </div>
         )}
 
-        {/* Tab 3: Knowledge Explorer / Semantic Search */}
         {activeTab === "explorer" && (
           <div className="space-y-6">
-            {/* Header / Search Controls Card */}
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -807,7 +788,6 @@ export default function ProjectWorkspacePage({
                 </div>
               </div>
 
-              {/* Search Form */}
               <form onSubmit={handleSearch} className="mt-5 flex flex-col sm:flex-row gap-2.5">
                 <div className="relative flex-1">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -859,7 +839,6 @@ export default function ProjectWorkspacePage({
               )}
             </div>
 
-            {/* Results Area */}
             {searching ? (
               <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center space-y-3 shadow-xs">
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
@@ -975,7 +954,6 @@ export default function ProjectWorkspacePage({
         )}
       </div>
 
-      {/* Edit Project Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
@@ -1058,7 +1036,6 @@ export default function ProjectWorkspacePage({
         </div>
       )}
 
-      {/* Delete Material Confirmation Modal */}
       {materialToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
@@ -1102,11 +1079,9 @@ export default function ProjectWorkspacePage({
           </div>
         </div>
       )}
-      {/* PDF Viewer Modal */}
       {viewingMaterial && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-3 sm:p-6">
           <div className="flex flex-col w-full max-w-5xl h-[88vh] rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-5 py-3.5 bg-slate-50 dark:bg-slate-900/50">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400">
@@ -1153,7 +1128,6 @@ export default function ProjectWorkspacePage({
               </div>
             </div>
 
-            {/* Viewer Body */}
             <div className="relative flex-1 w-full bg-slate-100 dark:bg-slate-950">
               <iframe
                 src={`/api/materials/file?id=${viewingMaterial.id}${viewingMaterial.targetPage ? `#page=${viewingMaterial.targetPage}` : ""}`}
@@ -1165,11 +1139,9 @@ export default function ProjectWorkspacePage({
         </div>
       )}
 
-      {/* Material & Chunk Inspection Modal */}
       {inspectingMaterial && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-3 sm:p-6">
           <div className="flex flex-col w-full max-w-4xl max-h-[85vh] rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-6 py-4 bg-slate-50 dark:bg-slate-900/50">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400">
@@ -1198,7 +1170,6 @@ export default function ProjectWorkspacePage({
               </button>
             </div>
 
-            {/* Metadata Overview Banner */}
             <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3.5">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div>
@@ -1248,7 +1219,6 @@ export default function ProjectWorkspacePage({
               )}
             </div>
 
-            {/* Chunk List Section */}
             <div className="flex-1 overflow-y-auto p-6 space-y-3 bg-slate-50/50 dark:bg-slate-950/40">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
@@ -1325,7 +1295,6 @@ export default function ProjectWorkspacePage({
               )}
             </div>
 
-            {/* Modal Footer */}
             <div className="flex items-center justify-end border-t border-slate-200 dark:border-slate-800 px-6 py-3 bg-white dark:bg-slate-900">
               <button
                 type="button"

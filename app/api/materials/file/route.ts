@@ -20,7 +20,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Missing material id" }, { status: 400 });
     }
 
-    // Verify material exists and load parent project for ownership check
     const material = await prisma.material.findUnique({
       where: { id },
       include: { project: true },
@@ -30,7 +29,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Material not found" }, { status: 404 });
     }
 
-    // Check authorization: student must own the project containing this material (or admin)
     if (user.role !== "admin" && material.project.userId !== user.id) {
       return NextResponse.json(
         { error: "Forbidden: You do not have permission to access this material" },
@@ -38,7 +36,6 @@ export async function GET(request: Request) {
       );
     }
 
-    // Resolve the stored filePath safely against the application's upload/public directory
     if (!material.filePath) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
@@ -49,7 +46,6 @@ export async function GET(request: Request) {
     const resolvedDiskPath = path.resolve(process.cwd(), "public", relativePath);
     const publicDir = path.resolve(process.cwd(), "public");
 
-    // Path traversal security check: path MUST reside strictly within public directory
     if (!resolvedDiskPath.startsWith(publicDir)) {
       return NextResponse.json({ error: "Forbidden: Invalid file path" }, { status: 403 });
     }

@@ -47,14 +47,12 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
     setError(null);
 
     try {
-      // 1. Fetch project info
       const projRes = await fetch(`/api/projects?projectId=${projectId}`);
       if (projRes.ok) {
         const projData = await projRes.json();
         setProject(projData.project);
       }
 
-      // 2. Generate adaptive quiz
       const res = await fetch("/api/quiz/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,7 +79,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
   }, [projectId]);
 
   const handleSelectOption = (questionId: string, option: string) => {
-    if (results) return; // Locked after submission
+    if (results) return;
     setAnswers((prev) => ({ ...prev, [questionId]: option }));
   };
 
@@ -94,7 +92,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
     e.preventDefault();
     if (!quizId || submitting) return;
 
-    // Check that all questions have an answer
     const unanswered = questions.some((q) => !answers[q.id] || answers[q.id].trim() === "");
     if (unanswered) {
       if (!confirm("You have unanswered questions. Do you still want to submit?")) {
@@ -126,7 +123,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
       }
 
       setResults(data);
-      // Scroll to top of results
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: any) {
       setError(err.message || "Submission failed.");
@@ -153,7 +149,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 transition-colors">
-      {/* Top Navigation */}
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
         <div className="mx-auto max-w-4xl flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -191,7 +186,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
-        {/* Error Notification */}
         {error && (
           <div className="rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-4 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -199,7 +193,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
-        {/* Results Banner */}
         {results && (
           <div className="rounded-3xl border border-indigo-200 dark:border-indigo-900/60 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-md space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
@@ -232,7 +225,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
               </div>
             </div>
 
-            {/* Fresh Recommendation Banner */}
             {results.recommendation && (
               <div className="rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/80 p-4 text-xs space-y-1">
                 <div className="flex items-center gap-1.5 font-bold text-indigo-700 dark:text-indigo-300">
@@ -244,7 +236,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
               </div>
             )}
 
-            {/* Concept Mastery Updates Table */}
             {results.masteryUpdates && results.masteryUpdates.length > 0 && (
               <div className="space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
@@ -283,7 +274,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
-        {/* Quiz Questions Form */}
         <form onSubmit={handleSubmitQuiz} className="space-y-6">
           {questions.map((q, idx) => {
             const evalResult = results?.evaluations?.find((e: any) => e.questionId === q.id);
@@ -293,7 +283,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                 key={q.id}
                 className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4 transition-colors"
               >
-                {/* Question Header */}
                 <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-xs">
@@ -310,12 +299,10 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                   </span>
                 </div>
 
-                {/* Question Prompt */}
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
                   {q.prompt}
                 </h3>
 
-                {/* Multiple Choice Options */}
                 {q.type === "MCQ" && q.options && (
                   <div className="space-y-2 pt-2">
                     {q.options.map((opt, optIdx) => {
@@ -360,7 +347,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                   </div>
                 )}
 
-                {/* Open Ended Textarea */}
                 {q.type === "OPEN_ENDED" && (
                   <div className="pt-2 space-y-2">
                     <textarea
@@ -377,7 +363,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                   </div>
                 )}
 
-                {/* Individual Question Evaluation Feedback */}
                 {evalResult && (
                   <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
                     <div className="flex items-center justify-between">
@@ -401,7 +386,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                       {evalResult.feedback}
                     </p>
 
-                    {/* Open Ended Strengths & Weaknesses */}
                     {evalResult.strengths && evalResult.strengths.length > 0 && (
                       <div className="text-xs space-y-1">
                         <strong className="text-emerald-600 dark:text-emerald-400">What you did well:</strong>

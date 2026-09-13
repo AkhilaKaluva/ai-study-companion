@@ -17,7 +17,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing projectId" }, { status: 400 });
     }
 
-    // Verify project ownership
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
@@ -29,7 +28,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // 1. Fetch project concepts sorted by lowest mastery first
     const concepts = await prisma.concept.findMany({
       where: { projectId },
       orderBy: { masteryScore: "asc" },
@@ -43,7 +41,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Fetch sample context chunks from materials
     const sampleChunks = await prisma.materialChunk.findMany({
       where: { material: { projectId, status: "READY" } },
       take: 6,
@@ -52,14 +49,12 @@ export async function POST(request: Request) {
 
     const contextText = sampleChunks.map((c) => c.content).join("\n\n");
 
-    // 3. Generate adaptive quiz questions targeting weak concepts
     const generatedQuestions = await generateTargetedQuiz({
       concepts,
       contextText,
       userId: user.id,
     });
 
-    // 4. Save Quiz and Questions in DB
     const quiz = await prisma.quiz.create({
       data: {
         projectId,
@@ -86,7 +81,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Format for frontend (hide correct answers until submission)
     const clientQuestions = quiz.questions.map((q) => ({
       id: q.id,
       conceptId: q.conceptId,

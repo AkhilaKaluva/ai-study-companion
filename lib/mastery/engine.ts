@@ -17,15 +17,11 @@ export interface MasteryUpdateResult {
   trend: "Improving" | "Declining" | "Stable";
 }
 
-/**
- * Updates concept mastery based on quiz performance, records history,
- * and generates fresh learning recommendations.
- */
 export async function updateConceptMastery(params: {
   conceptId: string;
   userId: string;
   projectId: string;
-  performancePercentage: number; // 0 to 100
+  performancePercentage: number;
   reason: "QUIZ_MCQ" | "OPEN_ENDED_ASSESSMENT";
 }): Promise<MasteryUpdateResult | null> {
   const { conceptId, userId, projectId, performancePercentage, reason } = params;
@@ -37,7 +33,6 @@ export async function updateConceptMastery(params: {
   if (!concept) return null;
 
   const previousScore = concept.masteryScore;
-  // Weighted exponential moving average (60% weight on new evidence, 40% on previous)
   const newScore = parseFloat(
     (previousScore * 0.4 + performancePercentage * 0.6).toFixed(1)
   );
@@ -47,7 +42,6 @@ export async function updateConceptMastery(params: {
   if (newScore > previousScore + 2) trend = "Improving";
   else if (newScore < previousScore - 2) trend = "Declining";
 
-  // 1. Update concept
   await prisma.concept.update({
     where: { id: conceptId },
     data: {
@@ -56,7 +50,6 @@ export async function updateConceptMastery(params: {
     },
   });
 
-  // 2. Persist MasteryHistory
   await prisma.masteryHistory.create({
     data: {
       conceptId: concept.id,
@@ -68,7 +61,6 @@ export async function updateConceptMastery(params: {
     },
   });
 
-  // 3. Log MASTERY_UPDATED activity event
   await prisma.activityEvent.create({
     data: {
       userId,
@@ -78,7 +70,6 @@ export async function updateConceptMastery(params: {
     },
   });
 
-  // 4. Generate next actionable recommendation based on mastery tier
   let recText = "";
   if (newScore < 50) {
     recText = `Your understanding of ${concept.name} is at ${Math.round(
@@ -94,13 +85,11 @@ export async function updateConceptMastery(params: {
     )}%). Advance to review subsequent topics or test comprehensive edge cases.`;
   }
 
-  // Deactivate older recommendations for this project
   await prisma.recommendation.updateMany({
     where: { projectId, status: "ACTIVE" },
     data: { status: "COMPLETED" },
   });
 
-  // Insert fresh active recommendation
   await prisma.recommendation.create({
     data: {
       projectId,

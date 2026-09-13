@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding database with production demo data...");
 
-  // Clear existing test data cleanly in order of relations
   try {
     await prisma.evaluationResult.deleteMany();
     await prisma.evaluationRun.deleteMany();
@@ -32,7 +31,6 @@ async function main() {
     console.log("Database reset note:", err);
   }
 
-  // 1. Seed Student: Alex Mercer
   const studentPassword = hashPassword("student123");
   const student = await prisma.user.create({
     data: {
@@ -44,7 +42,6 @@ async function main() {
     },
   });
 
-  // 2. Seed Admin: Dr. Sarah Vance
   const adminPassword = hashPassword("admin123");
   const admin = await prisma.user.create({
     data: {
@@ -56,7 +53,6 @@ async function main() {
     },
   });
 
-  // 3. Seed Space
   const space = await prisma.space.create({
     data: {
       id: "space-dist-sys",
@@ -66,7 +62,6 @@ async function main() {
     },
   });
 
-  // 4. Seed Project
   const project = await prisma.project.create({
     data: {
       id: "project-raft-consensus",
@@ -78,7 +73,6 @@ async function main() {
     },
   });
 
-  // 5. Seed Concepts with initial mastery
   const conceptLeader = await prisma.concept.create({
     data: {
       name: "Leader Election",
@@ -119,7 +113,6 @@ async function main() {
     },
   });
 
-  // 6. Seed Material & Knowledge Chunks
   const material = await prisma.material.create({
     data: {
       id: "material-raft-paper",
@@ -184,7 +177,6 @@ async function main() {
     });
   }
 
-  // 7. Seed Recommendation
   await prisma.recommendation.create({
     data: {
       projectId: project.id,
@@ -194,7 +186,6 @@ async function main() {
     },
   });
 
-  // 8. Seed Mastery History
   await prisma.masteryHistory.create({
     data: {
       conceptId: conceptLeader.id,
@@ -217,7 +208,6 @@ async function main() {
     },
   });
 
-  // 9. Seed Initial Activity Events
   await prisma.activityEvent.createMany({
     data: [
       {
@@ -257,7 +247,6 @@ async function main() {
     ],
   });
 
-  // 10. Seed AI Telemetry Logs
   await prisma.aiLog.createMany({
     data: [
       {

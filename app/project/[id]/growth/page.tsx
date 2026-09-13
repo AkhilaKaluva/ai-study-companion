@@ -33,7 +33,6 @@ export default function GrowthPage({ params }: { params: Promise<{ id: string }>
           setProject(data.project);
         }
 
-        // Fetch concept mastery history
         const histRes = await fetch(`/api/mastery?projectId=${projectId}`);
         if (histRes.ok) {
           const histData = await histRes.json();
@@ -66,17 +65,14 @@ export default function GrowthPage({ params }: { params: Promise<{ id: string }>
   }
 
   const concepts = project.concepts || [];
-  // Sort strongest vs weakest
   const sortedConcepts = [...concepts].sort((a, b) => b.masteryScore - a.masteryScore);
   const strongest = sortedConcepts.slice(0, 3);
   const weakest = [...sortedConcepts].reverse().slice(0, 3);
 
-  // Quiz history
   const quizAttempts = project.quizzes?.flatMap((q: any) => q.attempts || []) || [];
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 transition-colors">
-      {/* Top Header */}
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -113,9 +109,7 @@ export default function GrowthPage({ params }: { params: Promise<{ id: string }>
       </div>
 
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-8">
-        {/* Strongest vs Weakest Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Strongest Concepts */}
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
               <Award className="h-5 w-5" /> Strongest Concepts
@@ -144,7 +138,6 @@ export default function GrowthPage({ params }: { params: Promise<{ id: string }>
             )}
           </div>
 
-          {/* Weakest Concepts */}
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2 text-amber-500 font-bold text-sm">
               <AlertCircle className="h-5 w-5" /> Concepts Requiring Attention
@@ -174,7 +167,6 @@ export default function GrowthPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
 
-        {/* Longitudinal Mastery History Table / Feed */}
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -239,7 +231,6 @@ export default function GrowthPage({ params }: { params: Promise<{ id: string }>
           )}
         </div>
 
-        {/* Recent Quiz Scores */}
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
           <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />

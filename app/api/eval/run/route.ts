@@ -40,7 +40,6 @@ export async function POST() {
     },
   ];
 
-  // Test 1: Grounded question
   const t1Start = Date.now();
   try {
     const res1 = await askGroundedTutor({
@@ -77,7 +76,6 @@ export async function POST() {
     });
   }
 
-  // Test 2: Citation generation
   const t2Start = Date.now();
   try {
     const res2 = await askGroundedTutor({
@@ -115,7 +113,6 @@ export async function POST() {
     });
   }
 
-  // Test 3: Unsupported query refusal
   const t3Start = Date.now();
   try {
     const res3 = await askGroundedTutor({
@@ -154,7 +151,6 @@ export async function POST() {
     });
   }
 
-  // Test 4: Adaptive quiz generation
   const t4Start = Date.now();
   try {
     const res4 = await generateTargetedQuiz({
@@ -191,7 +187,6 @@ export async function POST() {
     });
   }
 
-  // Test 5: Open-Ended Grading Rubric Compliance
   const t5Start = Date.now();
   try {
     const res5 = await gradeOpenEndedAnswer({
@@ -232,7 +227,6 @@ export async function POST() {
   const passedCount = testResults.filter((r) => r.status === "PASS").length;
   const totalDuration = Date.now() - startTime;
 
-  // Persist EvaluationRun and EvaluationResult in DB
   const evalRun = await prisma.evaluationRun.create({
     data: {
       name: `Regression Benchmark Run (${new Date().toLocaleTimeString()})`,

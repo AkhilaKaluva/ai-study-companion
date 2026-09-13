@@ -104,7 +104,6 @@ export default function AdminSystemHealthPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Database Check */}
             <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 font-bold text-slate-900 dark:text-white text-base">
@@ -126,7 +125,6 @@ export default function AdminSystemHealthPage() {
               </div>
             </div>
 
-            {/* AI Provider Check */}
             <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 font-bold text-slate-900 dark:text-white text-base">
@@ -148,7 +146,6 @@ export default function AdminSystemHealthPage() {
               </div>
             </div>
 
-            {/* PDF Processing Check */}
             <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 font-bold text-slate-900 dark:text-white text-base">
@@ -170,7 +167,6 @@ export default function AdminSystemHealthPage() {
               </div>
             </div>
 
-            {/* Vector Embeddings Check */}
             <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 font-bold text-slate-900 dark:text-white text-base">

@@ -18,7 +18,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing quizId or answers array" }, { status: 400 });
     }
 
-    // 1. Fetch Quiz, Questions, and Project
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
       include: {
@@ -39,12 +38,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    // Verify ownership
     if (user.role !== "admin" && quiz.project.userId !== user.id) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    // 2. Evaluate answers
     const evaluationResults: Array<{
       questionId: string;
       conceptId: string;
@@ -85,7 +82,6 @@ export async function POST(request: Request) {
         }
         conceptScores[question.conceptId].scores.push(score);
       } else {
-        // Open-ended grading via AI
         const grading = await gradeOpenEndedAnswer({
           prompt: question.prompt,
           studentAnswer: ans.answer || "(No response provided)",
@@ -104,7 +100,6 @@ export async function POST(request: Request) {
         }
         conceptScores[question.conceptId].scores.push(score);
 
-        // Store separate AssessmentAttempt
         await prisma.assessmentAttempt.create({
           data: {
             projectId: quiz.projectId,
@@ -142,7 +137,6 @@ export async function POST(request: Request) {
         ? Math.round(totalScoreSum / evaluationResults.length)
         : 0;
 
-    // 3. Update concept mastery scores using Mastery Engine
     const masteryUpdates = [];
     for (const [conceptId, info] of Object.entries(conceptScores)) {
       const avgPerformance = info.scores.reduce((a, b) => a + b, 0) / info.scores.length;
@@ -156,7 +150,6 @@ export async function POST(request: Request) {
       if (result) masteryUpdates.push(result);
     }
 
-    // 4. Save QuizAttempt with user linkage
     const attempt = await prisma.quizAttempt.create({
       data: {
         quizId,
@@ -166,7 +159,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // 5. Track QUIZ_COMPLETED activity event
     await prisma.activityEvent.create({
       data: {
         userId: user.id,
@@ -176,7 +168,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // 6. Fetch updated recommendation
     const activeRec = await prisma.recommendation.findFirst({
       where: { projectId: quiz.projectId, status: "ACTIVE" },
       orderBy: { createdAt: "desc" },

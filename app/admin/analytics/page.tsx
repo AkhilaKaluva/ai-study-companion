@@ -69,7 +69,6 @@ export default function AdminAnalyticsPage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        {/* Metric Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
             <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Active Learners</div>
@@ -104,7 +103,6 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
 
-        {/* Platform Engagement Breakdown */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">

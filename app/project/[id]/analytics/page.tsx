@@ -79,7 +79,6 @@ export default function ProjectAnalyticsPage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 transition-colors">
-      {/* Header */}
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -116,7 +115,6 @@ export default function ProjectAnalyticsPage({
       </div>
 
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-8">
-        {/* Metric Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
             <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Overall Mastery</div>
@@ -151,7 +149,6 @@ export default function ProjectAnalyticsPage({
           </div>
         </div>
 
-        {/* Concept Mastery Distribution */}
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-6">
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -198,7 +195,6 @@ export default function ProjectAnalyticsPage({
           )}
         </div>
 
-        {/* Learning Activity Feed */}
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
           <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Award className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />

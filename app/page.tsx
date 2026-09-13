@@ -23,7 +23,6 @@ export const dynamic = "force-dynamic";
 export default async function LandingPage() {
   const user = await getCurrentUser();
 
-  // If already logged in, redirect to respective dashboard
   if (user) {
     if (user.role === "admin") {
       redirect("/admin");
@@ -34,19 +33,15 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white transition-colors duration-200">
-      {/* Hero Section */}
       <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-28 border-b border-slate-200 dark:border-slate-800">
-        {/* Background glow effects */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 w-full max-w-7xl h-96 bg-gradient-to-b from-indigo-100/60 via-purple-50/20 to-transparent dark:from-indigo-950/30 dark:via-purple-950/10 dark:to-transparent blur-3xl pointer-events-none" />
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          {/* Tagline Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/60 px-4 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 shadow-xs">
             <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
             AI-Powered Learning &amp; Growth Workspace
           </div>
 
-          {/* Main Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight">
             Learn smarter with an AI tutor{" "}
             <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
@@ -54,12 +49,10 @@ export default async function LandingPage() {
             </span>
           </h1>
 
-          {/* Subheadline */}
           <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
             Upload your learning materials, ask questions with page-accurate citations, practice with adaptive assessments, and track how your understanding grows.
           </p>
 
-          {/* Call to Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link
               href="/signup"
@@ -75,11 +68,9 @@ export default async function LandingPage() {
             </Link>
           </div>
 
-          {/* Product Preview Mockup */}
           <div className="pt-12 max-w-5xl mx-auto">
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-4 shadow-xl dark:shadow-slate-950/80">
               <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-4 sm:p-6 text-left">
-                {/* Header of preview */}
                 <div className="flex flex-wrap items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-2">
                   <div className="flex items-center gap-2">
                     <span className="h-3 w-3 rounded-full bg-red-400 inline-block" />
@@ -97,7 +88,6 @@ export default async function LandingPage() {
                   </div>
                 </div>
 
-                {/* Simulated Tutor Query & Citation */}
                 <div className="mt-4 space-y-3">
                   <div className="flex justify-end">
                     <div className="max-w-md rounded-2xl rounded-tr-xs bg-indigo-600 text-white p-3 text-xs sm:text-sm">
@@ -128,7 +118,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Feature Sections */}
       <section id="features" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         <div className="text-center space-y-3 max-w-3xl mx-auto">
           <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
@@ -143,7 +132,6 @@ export default async function LandingPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Feature 1: Grounded AI Tutor */}
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 transition">
             <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4">
               <Sparkles className="h-5 w-5" />
@@ -154,7 +142,6 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          {/* Feature 2: Learn from PDFs */}
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 transition">
             <div className="h-10 w-10 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4">
               <FileText className="h-5 w-5" />
@@ -165,7 +152,6 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          {/* Feature 3: Adaptive Practice */}
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 transition">
             <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
               <Target className="h-5 w-5" />
@@ -176,7 +162,6 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          {/* Feature 4: Concept Mastery */}
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 transition">
             <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
               <BrainCircuit className="h-5 w-5" />
@@ -187,7 +172,6 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          {/* Feature 5: Growth Analysis */}
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 transition">
             <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4">
               <TrendingUp className="h-5 w-5" />
@@ -198,7 +182,6 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          {/* Feature 6: Actionable Recommendations */}
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 transition">
             <div className="h-10 w-10 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
               <Compass className="h-5 w-5" />
@@ -211,7 +194,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* How it Works Stepper */}
       <section id="how-it-works" className="py-20 bg-slate-100/70 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
@@ -279,7 +261,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Observability & Admin Section */}
       <section id="analytics" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-950 text-white p-8 sm:p-12 shadow-2xl relative overflow-hidden">
           <div className="relative z-10 max-w-3xl space-y-4">
@@ -305,7 +286,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800 py-12 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-7xl mx-auto px-4 space-y-2">
           <p className="font-bold text-slate-700 dark:text-slate-300">

@@ -1,4 +1,3 @@
-// Vector embeddings utility using Google text-embedding-004 with cosine similarity
 import { GoogleGenAI } from "@google/genai";
 
 function getGenAI() {
@@ -9,17 +8,13 @@ function getGenAI() {
   return new GoogleGenAI({ apiKey });
 }
 
-/**
- * Generate a 768-dimensional embedding vector for a given text.
- * Falls back to deterministic semantic hashing if API key is not yet set.
- */
 export async function getEmbedding(text: string): Promise<number[]> {
   const ai = getGenAI();
 
   if (ai) {
     try {
       const response = await ai.models.embedContent({
-        model: "text-embedding-004",
+        model: "gemini-embedding-001",
         contents: text,
       });
 
@@ -35,14 +30,9 @@ export async function getEmbedding(text: string): Promise<number[]> {
     }
   }
 
-  // Fallback: 768-dim pseudo-vector based on character frequency / token hash
-  // Ensures local offline operation without crashing
   return createFallbackVector(text, 768);
 }
 
-/**
- * Generates batch embeddings for an array of texts.
- */
 export async function getBatchEmbeddings(texts: string[]): Promise<number[][]> {
   const results: number[][] = [];
   for (const text of texts) {
@@ -52,10 +42,6 @@ export async function getBatchEmbeddings(texts: string[]): Promise<number[][]> {
   return results;
 }
 
-/**
- * Calculates cosine similarity between two float vectors.
- * Returns value between -1.0 and 1.0 (typically 0.0 to 1.0 for normalized embeddings).
- */
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   if (!vecA || !vecB || vecA.length !== vecB.length || vecA.length === 0) {
     return 0;
@@ -91,7 +77,6 @@ function createFallbackVector(text: string, dimensions: number): number[] {
     const wordIdx = hashStr(word) % dimensions;
     vector[wordIdx] += 1.5;
 
-    // Sub-word 3-grams for morphological/stem matching
     for (let i = 0; i <= word.length - 3; i++) {
       const sub = word.slice(i, i + 3);
       const subIdx = hashStr(sub) % dimensions;
@@ -99,7 +84,6 @@ function createFallbackVector(text: string, dimensions: number): number[] {
     }
   }
 
-  // Normalize vector to unit sphere
   let sumSq = 0;
   for (let i = 0; i < dimensions; i++) sumSq += vector[i] * vector[i];
   const mag = Math.sqrt(sumSq) || 1;

@@ -22,7 +22,6 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Missing material id" }, { status: 400 });
     }
 
-    // Verify that the Material exists and load its parent project
     const material = await prisma.material.findUnique({
       where: { id },
       include: {
@@ -34,7 +33,6 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Material not found" }, { status: 404 });
     }
 
-    // Verify that the authenticated student owns the project containing this material (or admin)
     if (user.role !== "admin" && material.project.userId !== user.id) {
       return NextResponse.json(
         { error: "Forbidden: You do not have permission to delete this material" },
@@ -42,7 +40,6 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // 1. Remove the corresponding stored PDF file if it exists
     if (material.filePath) {
       try {
         const relativePath = material.filePath.startsWith("/")
@@ -51,7 +48,6 @@ export async function DELETE(request: Request) {
         const resolvedDiskPath = path.resolve(process.cwd(), "public", relativePath);
         const publicDir = path.resolve(process.cwd(), "public");
 
-        // Secure check: verify path is strictly within the public directory
         if (resolvedDiskPath.startsWith(publicDir) && fs.existsSync(resolvedDiskPath)) {
           fs.unlinkSync(resolvedDiskPath);
         }
@@ -60,12 +56,10 @@ export async function DELETE(request: Request) {
       }
     }
 
-    // 2. Remove the Material record (Prisma schema cascades deletion to MaterialChunk records)
     await prisma.material.delete({
       where: { id: material.id },
     });
 
-    // 3. Record MATERIAL_DELETED activity event
     await prisma.activityEvent.create({
       data: {
         userId: user.id,

@@ -14,18 +14,12 @@ export interface LogAiCallParams {
   errorMessage?: string;
 }
 
-/**
- * Calculates estimated dollar cost for Gemini 2.5 Flash and logs call into database.
- */
 export async function logAiCall(params: LogAiCallParams) {
   try {
     const promptTokens = params.promptTokens;
     const completionTokens = params.completionTokens;
     const totalTokens = params.totalTokens ?? (promptTokens + completionTokens);
 
-    // Gemini 2.5 Flash pricing:
-    // Prompt: $0.075 / 1M tokens ($0.000075 per 1k)
-    // Completion: $0.30 / 1M tokens ($0.0003 per 1k)
     const promptCost = (promptTokens / 1_000_000) * 0.075;
     const completionCost = (completionTokens / 1_000_000) * 0.3;
     const estimatedCost =

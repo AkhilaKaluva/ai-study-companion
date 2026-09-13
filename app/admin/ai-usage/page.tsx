@@ -76,7 +76,6 @@ export default function AdminAiUsagePage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        {/* KPI Summary Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
             <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Total AI Requests</div>
@@ -114,7 +113,6 @@ export default function AdminAiUsagePage() {
           </div>
         </div>
 
-        {/* Filter Bar */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           <span className="text-xs font-semibold text-slate-400 flex items-center gap-1 shrink-0">
             <Filter className="h-3.5 w-3.5" /> Filter Feature:
@@ -136,7 +134,6 @@ export default function AdminAiUsagePage() {
           )}
         </div>
 
-        {/* Telemetry Trace Table */}
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
           <div className="border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">

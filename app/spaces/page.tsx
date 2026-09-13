@@ -13,7 +13,6 @@ export default function SpacesPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Edit Space modal state
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingSpaceId, setEditingSpaceId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -142,7 +141,6 @@ export default function SpacesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16 transition-colors">
-      {/* Header */}
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -244,7 +242,6 @@ export default function SpacesPage() {
         )}
       </div>
 
-      {/* Modal Dialog */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
@@ -313,7 +310,6 @@ export default function SpacesPage() {
         </div>
       )}
 
-      {/* Edit Space Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800">

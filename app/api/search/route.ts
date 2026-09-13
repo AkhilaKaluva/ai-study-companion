@@ -34,7 +34,6 @@ export async function GET(request: Request) {
       );
     }
 
-    // Verify project exists and user is owner or admin (strict tenant isolation)
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
@@ -46,10 +45,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Perform project-scoped semantic search using existing RAG infrastructure
     const { chunks } = await retrieveProjectContext(projectId, query, 10, 0.15);
 
-    // Format results cleanly (strictly exclude embeddings, file paths, or sensitive data)
     const results = chunks.map((chunk) => ({
       chunkId: chunk.chunkId || "",
       materialId: chunk.materialId || "",

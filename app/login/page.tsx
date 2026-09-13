@@ -32,10 +32,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Notify other components of auth state change
       window.dispatchEvent(new Event("auth_state_changed"));
 
-      // Redirect to returned destination
       router.push(data.redirectTo || "/dashboard");
       router.refresh();
     } catch (err: any) {
@@ -53,7 +51,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-950 transition-colors">
       <div className="w-full max-w-md space-y-6">
-        {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-500/20">
             <Sparkles className="h-6 w-6" />
@@ -66,7 +63,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Login Form Card */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm">
           {error && (
             <div className="mb-5 flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-3 text-xs text-red-700 dark:text-red-300">
@@ -136,7 +132,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Evaluator Credentials Helper Box */}
         <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/40 p-4 text-xs space-y-2">
           <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
             <span>Course Evaluator Demo Accounts:</span>

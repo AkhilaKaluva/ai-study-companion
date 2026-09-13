@@ -12,9 +12,6 @@ export interface AuthenticatedUser {
   role: "student" | "admin";
 }
 
-/**
- * Creates a new database session and sets an HTTP-only secure cookie.
- */
 export async function createSession(userId: string): Promise<string> {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date();
@@ -40,9 +37,6 @@ export async function createSession(userId: string): Promise<string> {
   return token;
 }
 
-/**
- * Destroys current session from database and removes cookie.
- */
 export async function destroySession(): Promise<void> {
   try {
     const cookieStore = await cookies();
@@ -59,10 +53,6 @@ export async function destroySession(): Promise<void> {
   }
 }
 
-/**
- * Retrieves the currently authenticated user from the session cookie.
- * Returns null if unauthenticated or session expired.
- */
 export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
   try {
     const cookieStore = await cookies();
@@ -90,7 +80,6 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       return null;
     }
 
-    // Check expiration
     if (new Date() > session.expiresAt) {
       await prisma.session.delete({ where: { id: session.id } });
       cookieStore.delete(SESSION_COOKIE_NAME);
@@ -103,15 +92,15 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       email: session.user.email,
       role: session.user.role as "student" | "admin",
     };
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.digest === "DYNAMIC_SERVER_USAGE" || err?.message?.includes("Dynamic server usage")) {
+      throw err;
+    }
     console.error("Error verifying current user session:", err);
     return null;
   }
 }
 
-/**
- * Guard for authenticated API routes. Throws 401 response if unauthenticated.
- */
 export async function requireAuth(): Promise<AuthenticatedUser> {
   const user = await getCurrentUser();
   if (!user) {
@@ -120,9 +109,6 @@ export async function requireAuth(): Promise<AuthenticatedUser> {
   return user;
 }
 
-/**
- * Guard for admin-only API routes. Throws 403 response if not admin.
- */
 export async function requireAdmin(): Promise<AuthenticatedUser> {
   const user = await requireAuth();
   if (user.role !== "admin") {

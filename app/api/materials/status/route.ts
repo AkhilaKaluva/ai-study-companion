@@ -36,7 +36,6 @@ export async function GET(request: Request) {
     }
 
     if (projectId) {
-      // Verify project ownership
       const project = await prisma.project.findFirst({
         where: {
           id: projectId,

@@ -37,6 +37,7 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
 
   const [project, setProject] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -47,6 +48,7 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
   } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isSubmittingRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,6 +74,9 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
         if (chatRes.ok) {
           const chatData = await chatRes.json();
           setMessages(chatData.messages || []);
+          if (chatData.conversationId) {
+            setConversationId(chatData.conversationId);
+          }
         }
       } catch (err) {
         console.error("Failed to load tutor data:", err);
@@ -88,7 +93,8 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
 
   const handleSendMessage = async (textToSend?: string) => {
     const queryText = (textToSend || input).trim();
-    if (!queryText || loading) return;
+    if (!queryText || loading || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
 
     setInput("");
     setLoading(true);
@@ -117,6 +123,7 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
         body: JSON.stringify({
           projectId,
           message: queryText,
+          conversationId: conversationId || undefined,
         }),
       });
 
@@ -128,7 +135,6 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
       const contentType = res.headers.get("content-type") || "";
 
       if (contentType.includes("text/event-stream")) {
-        // SSE Streaming Response
         const reader = res.body?.getReader();
         if (!reader) {
           throw new Error("No response stream available");
@@ -161,6 +167,9 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
           }
 
           if (eventType === "start") {
+            if (data.conversationId) {
+              setConversationId(data.conversationId);
+            }
             if (!messageAdded) {
               messageAdded = true;
               setStreamingMessageId(assistantTempId);
@@ -214,8 +223,10 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
             );
           } else if (eventType === "done") {
             const finalId = data.messageId || assistantTempId;
+            if (data.conversationId) setConversationId(data.conversationId);
             if (data.citations) currentCitations = data.citations;
             if (typeof data.isUnsupported === "boolean") isUnsupported = data.isUnsupported;
+            const finalContent = data.response || accumulatedContent;
 
             setMessages((prev) =>
               prev.map((msg) =>
@@ -223,6 +234,7 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
                   ? {
                       ...msg,
                       id: finalId,
+                      content: finalContent || msg.content,
                       citations: currentCitations,
                       isUnsupported,
                     }
@@ -232,7 +244,7 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
             setIsStreaming(false);
             setStreamingMessageId(null);
           } else if (eventType === "error") {
-            throw new Error(data.message || "An error occurred in the tutor stream.");
+            throw new Error(data.message || data.error || "An error occurred in the tutor stream.");
           }
         };
 
@@ -254,14 +266,14 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
           processSseBlock(buffer);
         }
       } else {
-        // Buffered JSON Fallback
         const data = await res.json();
+        if (data.conversationId) setConversationId(data.conversationId);
         const assistantMsg: Message = {
-          id: data.message.id,
+          id: data.message?.id || `msg-${Date.now()}`,
           role: "assistant",
-          content: data.message.content,
+          content: data.response || data.message?.content || "",
           citations: data.citations || [],
-          isUnsupported: data.isUnsupported,
+          isUnsupported: data.isUnsupported ?? false,
         };
         setMessages((prev) => [...prev, assistantMsg]);
       }
@@ -278,12 +290,19 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
           )
         );
       } else {
+        setInput(queryText);
+        let cleanErr = err.message || "An error occurred while connecting to the AI Tutor. Please try asking again.";
+        if (cleanErr.includes("429") || cleanErr.includes("quota") || cleanErr.includes("RESOURCE_EXHAUSTED")) {
+          cleanErr = "The AI Tutor is experiencing high demand. Please wait a few moments and try your question again.";
+        } else if (cleanErr.includes("401") || cleanErr.includes("Unauthorized")) {
+          cleanErr = "Your session expired. Please refresh the page or log in again.";
+        } else if (cleanErr.includes("503") || cleanErr.includes("GEMINI_API_KEY")) {
+          cleanErr = "The AI service is temporarily unavailable. Please try again shortly.";
+        }
         const errorMsg: Message = {
           id: `err-${Date.now()}`,
           role: "assistant",
-          content:
-            err.message ||
-            "An error occurred while connecting to the AI Tutor. Please try asking again.",
+          content: cleanErr,
         };
         setMessages((prev) => [
           ...prev.filter((m) => m.id !== assistantTempId),
@@ -294,6 +313,7 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
       setIsStreaming(false);
       setStreamingMessageId(null);
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -307,7 +327,6 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors">
-      {/* Tutor Top Header */}
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 sm:px-6">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -343,10 +362,8 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
         </div>
       </div>
 
-      {/* Main Chat Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
         <div className="mx-auto max-w-4xl space-y-6">
-          {/* Grounding System Banner */}
           <div className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/30 p-4 text-xs text-indigo-900 dark:text-indigo-200 flex items-start gap-3">
             <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -357,7 +374,6 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
             </div>
           </div>
 
-          {/* Conversation History */}
           {messages.length === 0 ? (
             <div className="py-12 text-center space-y-4">
               <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
@@ -372,7 +388,6 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
                 </p>
               </div>
 
-              {/* Suggested prompts */}
               <div className="flex flex-wrap justify-center gap-2 pt-2 max-w-xl mx-auto">
                 {[
                   "How does leader election work in Raft?",
@@ -427,7 +442,6 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
                           : "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-tl-xs shadow-xs"
                       }`}
                     >
-                      {/* Refusal Banner if unsupported */}
                       {msg.isUnsupported && (
                         <div className="flex items-center gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 p-2.5 text-xs text-amber-800 dark:text-amber-300 mb-2">
                           <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
@@ -444,7 +458,6 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
                         )}
                       </div>
 
-                      {/* Supporting Citations */}
                       {parsedCitations.length > 0 && (
                         <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
                           <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
@@ -494,7 +507,6 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
         </div>
       </div>
 
-      {/* Citation Snippet Modal Drawer */}
       {activeSnippet && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
@@ -531,7 +543,6 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
-      {/* Fixed Bottom Input Bar */}
       <div className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-colors">
         <div className="mx-auto max-w-4xl">
           <form
@@ -564,7 +575,7 @@ export default function TutorPage({ params }: { params: Promise<{ id: string }> 
           </form>
           <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 px-1">
             <span>Answers synthesized strictly from indexed PDF knowledge chunks</span>
-            <span>Gemini 2.5 Flash Grounded RAG</span>
+            <span>Gemini 3.6 Flash Grounded RAG</span>
           </div>
         </div>
       </div>

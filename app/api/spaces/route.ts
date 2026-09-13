@@ -51,7 +51,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Track SPACE_CREATED event
     await prisma.activityEvent.create({
       data: {
         userId: user.id,
@@ -83,7 +82,6 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Missing space id" }, { status: 400 });
     }
 
-    // Verify that the Space exists
     const space = await prisma.space.findUnique({
       where: { id },
     });
@@ -92,7 +90,6 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Space not found" }, { status: 404 });
     }
 
-    // Verify that the authenticated user owns the Space or is an admin
     if (user.role !== "admin" && space.userId !== user.id) {
       return NextResponse.json(
         { error: "Forbidden: You do not have permission to edit this space" },
@@ -100,12 +97,10 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Validate incoming fields
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json({ error: "Space name is required" }, { status: 400 });
     }
 
-    // Update only editable fields
     const updatedSpace = await prisma.space.update({
       where: { id },
       data: {
@@ -122,7 +117,6 @@ export async function PUT(request: Request) {
       },
     });
 
-    // Track SPACE_UPDATED event
     await prisma.activityEvent.create({
       data: {
         userId: user.id,
@@ -152,7 +146,6 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Missing space id" }, { status: 400 });
     }
 
-    // Verify ownership
     const space = await prisma.space.findUnique({
       where: { id },
     });

@@ -41,7 +41,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Material not found" }, { status: 404 });
     }
 
-    // Authorization: User must own the project containing this material (or admin)
     if (user.role !== "admin" && material.project.userId !== user.id) {
       return NextResponse.json(
         { error: "Forbidden: You do not have permission to access this material" },
@@ -49,7 +48,6 @@ export async function GET(request: Request) {
       );
     }
 
-    // Return safe material metadata and chunk previews (no embeddings or file paths exposed)
     return NextResponse.json({
       material: {
         id: material.id,

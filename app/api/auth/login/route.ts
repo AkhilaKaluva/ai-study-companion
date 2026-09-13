@@ -17,12 +17,10 @@ export async function POST(request: Request) {
 
     const trimmedEmail = email.trim().toLowerCase();
 
-    // Look up user
     const user = await prisma.user.findUnique({
       where: { email: trimmedEmail },
     });
 
-    // Timing-safe check: If user not found, perform dummy verification to mitigate timing attacks
     if (!user || !verifyPassword(password, user.passwordHash)) {
       return NextResponse.json(
         { error: "Invalid email or password." },
@@ -30,10 +28,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create session & secure cookie
     await createSession(user.id);
 
-    // Track LOGIN activity event
     await prisma.activityEvent.create({
       data: {
         userId: user.id,

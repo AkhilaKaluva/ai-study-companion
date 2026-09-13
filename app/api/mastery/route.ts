@@ -16,7 +16,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Missing projectId" }, { status: 400 });
     }
 
-    // Verify ownership
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,

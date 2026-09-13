@@ -12,14 +12,12 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  // Edit Space form state
   const [showEditSpaceModal, setShowEditSpaceModal] = useState(false);
   const [editSpaceName, setEditSpaceName] = useState("");
   const [editSpaceDescription, setEditSpaceDescription] = useState("");
   const [savingSpace, setSavingSpace] = useState(false);
   const [editSpaceError, setEditSpaceError] = useState<string | null>(null);
 
-  // New Project form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [learningGoal, setLearningGoal] = useState("");
@@ -149,7 +147,6 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16 transition-colors">
-      {/* Header */}
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <Link
@@ -195,7 +192,6 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
         </div>
       </div>
 
-      {/* Projects List */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-bold text-slate-900 dark:text-white">
@@ -273,7 +269,6 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
         )}
       </div>
 
-      {/* Create Project Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
@@ -356,7 +351,6 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
         </div>
       )}
 
-      {/* Edit Space Modal */}
       {showEditSpaceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800">

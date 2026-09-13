@@ -33,7 +33,6 @@ export default async function DashboardPage() {
     redirect("/admin");
   }
 
-  // 1. Fetch user's spaces and projects with strict tenant isolation
   const spaces = await prisma.space.findMany({
     where: { userId: user.id },
     include: {
@@ -53,14 +52,12 @@ export default async function DashboardPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  // 2. Fetch user's recent activity events
   const activities = await prisma.activityEvent.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
     take: 6,
   });
 
-  // 3. Fetch user's quiz attempts count
   const totalQuizAttempts = await prisma.quizAttempt.count({
     where: { userId: user.id },
   });
@@ -68,25 +65,21 @@ export default async function DashboardPage() {
   const allProjects = spaces.flatMap((s) => s.projects);
   const allConcepts = allProjects.flatMap((p) => p.concepts);
 
-  // Concepts needing attention (<50%)
   const weakConcepts = allConcepts
     .filter((c) => c.masteryScore < 50 || c.status === "NEEDS_ATTENTION")
     .slice(0, 4);
 
-  // Overall average mastery
   const overallAvgMastery =
     allConcepts.length > 0
       ? Math.round(allConcepts.reduce((acc, c) => acc + c.masteryScore, 0) / allConcepts.length)
       : 0;
 
-  // Find latest active recommendation across projects
   const activeRecommendation =
     allProjects.find((p) => p.recommendations.length > 0)?.recommendations[0] || null;
   const recommendedProject = activeRecommendation
     ? allProjects.find((p) => p.id === activeRecommendation.projectId)
     : allProjects[0] || null;
 
-  // Empty State for brand new users
   if (spaces.length === 0 && allProjects.length === 0) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-12 transition-colors">
@@ -136,7 +129,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16 transition-colors">
-      {/* Header */}
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 transition-colors">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -153,7 +145,6 @@ export default async function DashboardPage() {
               </p>
             </div>
 
-            {/* Quick Actions */}
             <div className="flex flex-wrap items-center gap-2.5">
               <Link
                 href="/spaces"
@@ -175,7 +166,6 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        {/* Recommended Next Action Banner */}
         {activeRecommendation && (
           <div className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-r from-indigo-50/90 via-white to-purple-50/70 dark:from-indigo-950/40 dark:via-slate-900 dark:to-purple-950/30 p-5 sm:p-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -209,7 +199,6 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Overview Stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
             <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Overall Mastery</div>
@@ -249,9 +238,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Continue Learning + Areas Needing Attention */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Active / Recent Projects */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Continue Learning</h2>
@@ -338,9 +325,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Right Column: Weak Concepts & Recent Activity */}
           <div className="space-y-6">
-            {/* Weak Concepts */}
             <div className="space-y-3">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
@@ -373,7 +358,6 @@ export default async function DashboardPage() {
               )}
             </div>
 
-            {/* Recent Activity */}
             <div className="space-y-3">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Clock className="h-4 w-4 text-slate-400" />

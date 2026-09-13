@@ -17,7 +17,6 @@ export async function GET(request: Request) {
       const project = await prisma.project.findFirst({
         where: {
           id: projectId,
-          // Admins can inspect platform projects, students only their own
           ...(user.role === "admin" ? {} : { userId: user.id }),
         },
         include: {
@@ -54,7 +53,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ project });
     }
 
-    // List projects for current user
     const projects = await prisma.project.findMany({
       where: {
         userId: user.id,
@@ -92,7 +90,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify Space belongs to user
     const space = await prisma.space.findFirst({
       where: {
         id: spaceId,
@@ -114,7 +111,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Track PROJECT_CREATED event
     await prisma.activityEvent.create({
       data: {
         userId: user.id,
@@ -147,7 +143,6 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Missing project id" }, { status: 400 });
     }
 
-    // Verify that the Project exists
     const project = await prisma.project.findUnique({
       where: { id },
     });
@@ -156,7 +151,6 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Verify that the authenticated student owns the Project or is an admin
     if (user.role !== "admin" && project.userId !== user.id) {
       return NextResponse.json(
         { error: "Forbidden: You do not have permission to edit this project" },
@@ -164,7 +158,6 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Validate editable fields
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json({ error: "Project name is required" }, { status: 400 });
     }
@@ -173,7 +166,6 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Learning goal is required" }, { status: 400 });
     }
 
-    // Update ONLY fields intended to be editable
     const updatedProject = await prisma.project.update({
       where: { id },
       data: {
@@ -188,7 +180,6 @@ export async function PUT(request: Request) {
       },
     });
 
-    // Track PROJECT_UPDATED event
     await prisma.activityEvent.create({
       data: {
         userId: user.id,

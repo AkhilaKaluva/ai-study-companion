@@ -55,13 +55,11 @@ export function Navbar() {
 
   useEffect(() => {
     fetchSession();
-    // Listen for custom auth events to refresh session state immediately
     const handleAuthChange = () => fetchSession();
     window.addEventListener("auth_state_changed", handleAuthChange);
     return () => window.removeEventListener("auth_state_changed", handleAuthChange);
   }, [pathname]);
 
-  // Close mobile menu upon navigation
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
@@ -83,7 +81,6 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md transition-colors">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand Logo */}
         <div className="flex items-center gap-6">
           <Link
             href={currentUser ? (currentUser.role === "admin" ? "/admin" : "/dashboard") : "/"}
@@ -97,9 +94,7 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
-            {/* Student Navigation */}
             {currentUser && currentUser.role === "student" && (
               <>
                 <Link
@@ -138,7 +133,6 @@ export function Navbar() {
               </>
             )}
 
-            {/* Admin Navigation */}
             {currentUser && currentUser.role === "admin" && (
               <>
                 <Link
@@ -210,7 +204,6 @@ export function Navbar() {
               </>
             )}
 
-            {/* Public Unauthenticated Navigation */}
             {!currentUser && pathname === "/" && (
               <>
                 <a
@@ -242,7 +235,6 @@ export function Navbar() {
           </nav>
         </div>
 
-        {/* Right Action Area */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
 
@@ -266,7 +258,6 @@ export function Navbar() {
 
           {!loading && currentUser && (
             <div className="hidden sm:flex items-center gap-2.5">
-              {/* User badge */}
               <Link
                 href="/settings"
                 className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-700 transition"
@@ -286,7 +277,6 @@ export function Navbar() {
                 </span>
               </Link>
 
-              {/* Settings */}
               <Link
                 href="/settings"
                 className="rounded-lg p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
@@ -295,7 +285,6 @@ export function Navbar() {
                 <Settings className="h-4 w-4" />
               </Link>
 
-              {/* Logout */}
               <button
                 type="button"
                 onClick={handleLogout}
@@ -307,7 +296,6 @@ export function Navbar() {
             </div>
           )}
 
-          {/* Mobile Hamburger Button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -319,7 +307,6 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pt-2 pb-4 space-y-1">
           {currentUser && currentUser.role === "student" && (

@@ -12,7 +12,7 @@ model User {
   email        String         @unique
   name         String
   passwordHash String
-  role         String         @default("student") // "student" | "admin"
+  role         String         @default("student")
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   sessions     Session[]
@@ -79,7 +79,7 @@ model Material {
   filePath     String
   fileSizeBytes Int            @default(0)
   pageCount    Int             @default(0)
-  status       String          @default("QUEUED") // QUEUED | PROCESSING | EXTRACTING | READY | FAILED
+  status       String          @default("QUEUED")
   errorMessage String?
   projectId    String
   project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -97,7 +97,7 @@ model MaterialChunk {
   pageNumber Int
   chunkIndex Int
   content    String
-  embedding  String   // JSON string of Float[]
+  embedding  String
   createdAt  DateTime @default(now())
 
   @@index([materialId])
@@ -107,8 +107,8 @@ model Concept {
   id            String         @id @default(uuid())
   name          String
   description   String
-  masteryScore  Float          @default(0.0) // 0.0 to 100.0
-  status        String         @default("NEEDS_ATTENTION") // NEEDS_ATTENTION | DEVELOPING | STRONG
+  masteryScore  Float          @default(0.0)
+  status        String         @default("NEEDS_ATTENTION")
   projectId     String
   project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   quizQuestions QuizQuestion[]
@@ -128,7 +128,7 @@ model MasteryHistory {
   score         Float
   previousScore Float
   delta         Float
-  reason        String   // "QUIZ_MCQ" | "OPEN_ENDED_ASSESSMENT" | "INITIAL_ESTIMATE"
+  reason        String
   createdAt     DateTime @default(now())
 
   @@index([conceptId])
@@ -151,9 +151,9 @@ model ChatMessage {
   id             String       @id @default(uuid())
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  role           String       // "user" | "assistant"
+  role           String
   content        String
-  citations      String?      // JSON string of [{ materialName, pageNumber, snippet }]
+  citations      String?
   isUnsupported  Boolean      @default(false)
   createdAt      DateTime     @default(now())
 
@@ -178,12 +178,12 @@ model QuizQuestion {
   quiz          Quiz    @relation(fields: [quizId], references: [id], onDelete: Cascade)
   conceptId     String
   concept       Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-  type          String  // "MCQ" | "OPEN_ENDED"
+  type          String
   prompt        String
-  options       String? // JSON string: '["Option A", "Option B", ...]'
-  correctAnswer String? // For MCQ
+  options       String?
+  correctAnswer String?
   explanation   String?
-  rubric        String? // Evaluation rubric for open-ended grading
+  rubric        String?
 
   @@index([quizId])
   @@index([conceptId])
@@ -195,8 +195,8 @@ model QuizAttempt {
   quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  score     Float    // 0.0 to 100.0
-  answers   String   // JSON string of [{ questionId, userAnswer, isCorrect, feedback, scoreDelta }]
+  score     Float
+  answers   String
   createdAt DateTime @default(now())
 
   @@index([quizId])
@@ -212,10 +212,10 @@ model AssessmentAttempt {
   conceptId     String?
   prompt        String
   studentAnswer String
-  score         Float    // 0.0 to 100.0
+  score         Float
   feedback      String
-  strengths     String?  // JSON string of string[]
-  weaknesses    String?  // JSON string of string[]
+  strengths     String?
+  weaknesses    String?
   createdAt     DateTime @default(now())
 
   @@index([projectId])
@@ -228,7 +228,7 @@ model Recommendation {
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   text      String
   conceptId String?
-  status    String   @default("ACTIVE") // ACTIVE | DISMISSED | COMPLETED
+  status    String   @default("ACTIVE")
   createdAt DateTime @default(now())
 
   @@index([projectId])
@@ -240,9 +240,9 @@ model ActivityEvent {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectId   String?
   project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  type        String   // "SIGNUP" | "LOGIN" | "SPACE_CREATED" | "PROJECT_CREATED" | "MATERIAL_UPLOADED" | "MATERIAL_PROCESSED" | "TUTOR_QUESTION" | "QUIZ_COMPLETED" | "ASSESSMENT_SUBMITTED" | "MASTERY_UPDATED"
+  type        String
   description String
-  metadata    String?  // JSON string
+  metadata    String?
   createdAt   DateTime @default(now())
 
   @@index([userId])
@@ -256,8 +256,8 @@ model AiLog {
   user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   projectId        String?
   project          Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  feature          String   // "TUTOR_CHAT" | "CONCEPT_EXTRACTION" | "QUIZ_GEN" | "AI_GRADING" | "RECOMMENDATION" | "EVAL"
-  model            String   // "gemini-2.5-flash"
+  feature          String
+  model            String
   latencyMs        Int
   promptTokens     Int
   completionTokens Int
@@ -275,12 +275,12 @@ model AiLog {
 model EvaluationRun {
   id         String             @id @default(uuid())
   name       String
-  status     String             @default("COMPLETED") // RUNNING | COMPLETED | FAILED
+  status     String             @default("COMPLETED")
   passCount  Int                @default(0)
   failCount  Int                @default(0)
   totalCount Int                @default(0)
   durationMs Int                @default(0)
-  details    String?            // JSON summary
+  details    String?
   results    EvaluationResult[]
   createdAt  DateTime           @default(now())
 }
@@ -290,8 +290,8 @@ model EvaluationResult {
   runId        String
   run          EvaluationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
   testName     String
-  category     String        // "GROUNDEDNESS" | "CITATIONS" | "REFUSAL" | "QUIZ_GEN" | "GRADING"
-  status       String        // "PASS" | "FAIL"
+  category     String
+  status       String
   score        Float         @default(1.0)
   input        String
   expected     String

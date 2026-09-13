@@ -78,7 +78,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
-        {/* Profile Card */}
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-6">
           <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <User className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
@@ -115,7 +114,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Theme Preferences */}
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-6">
           <div className="space-y-1">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -128,7 +126,6 @@ export default function SettingsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Light Mode */}
             <button
               type="button"
               onClick={() => setTheme("light")}
@@ -148,7 +145,6 @@ export default function SettingsPage() {
               {theme === "light" && <Check className="h-4 w-4 text-indigo-600" />}
             </button>
 
-            {/* Dark Mode */}
             <button
               type="button"
               onClick={() => setTheme("dark")}
@@ -168,7 +164,6 @@ export default function SettingsPage() {
               {theme === "dark" && <Check className="h-4 w-4 text-indigo-600" />}
             </button>
 
-            {/* System Mode */}
             <button
               type="button"
               onClick={() => setTheme("system")}
@@ -190,7 +185,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Session / Logout */}
         <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

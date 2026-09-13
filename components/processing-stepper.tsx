@@ -33,7 +33,6 @@ export function ProcessingStepper({ status, pageCount, errorMessage }: Processin
     if (status === "FAILED") return "failed";
     if (status === "READY") return "completed";
 
-    // Map simplified statuses
     const currentNormalized =
       status === "QUEUED"
         ? "UPLOADING"

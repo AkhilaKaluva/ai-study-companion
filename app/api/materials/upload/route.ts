@@ -27,7 +27,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify project ownership
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
@@ -39,7 +38,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // 1. Create directory for uploads if needed
     const uploadDir = path.join(process.cwd(), "public", "uploads");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -52,7 +50,6 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(arrayBuffer);
     fs.writeFileSync(filePath, buffer);
 
-    // 2. Create Material in DB with status PROCESSING
     const material = await prisma.material.create({
       data: {
         name: file.name,
@@ -63,7 +60,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Log MATERIAL_UPLOADED activity
     await prisma.activityEvent.create({
       data: {
         userId: user.id,
@@ -73,7 +69,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // 3. Schedule background ingestion without blocking the HTTP response
     scheduleMaterialIngestion(material.id);
 
     return NextResponse.json({
