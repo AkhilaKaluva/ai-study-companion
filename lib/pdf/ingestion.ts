@@ -2,9 +2,8 @@ import { prisma } from "@/lib/db/prisma";
 import { parseAndChunkPdf } from "@/lib/pdf/parser";
 import { getBatchEmbeddings } from "@/lib/ai/embeddings";
 import { extractConceptsFromText } from "@/lib/ai/gemini";
+import { readMaterialFile } from "@/lib/storage";
 import { after } from "next/server";
-import fs from "fs";
-import path from "path";
 
 export interface IngestionResult {
   success: boolean;
@@ -61,16 +60,7 @@ export async function processMaterialIngestion(materialId: string): Promise<Inge
   }
 
   try {
-    const relativePath = material.filePath.startsWith("/")
-      ? material.filePath.slice(1)
-      : material.filePath;
-    const resolvedDiskPath = path.resolve(process.cwd(), "public", relativePath);
-
-    if (!fs.existsSync(resolvedDiskPath)) {
-      throw new Error("Uploaded PDF file not found on disk.");
-    }
-
-    const buffer = fs.readFileSync(resolvedDiskPath);
+    const buffer = await readMaterialFile(material.filePath);
 
     const check1 = await prisma.material.findUnique({ where: { id: materialId } });
     if (!check1) {

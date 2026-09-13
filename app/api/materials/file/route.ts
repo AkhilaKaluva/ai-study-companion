@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import fs from "fs";
-import path from "path";
+import { readMaterialFile } from "@/lib/storage";
 
 export async function GET(request: Request) {
   try {
@@ -40,25 +39,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
-    const relativePath = material.filePath.startsWith("/")
-      ? material.filePath.slice(1)
-      : material.filePath;
-    const resolvedDiskPath = path.resolve(process.cwd(), "public", relativePath);
-    const publicDir = path.resolve(process.cwd(), "public");
-
-    if (!resolvedDiskPath.startsWith(publicDir)) {
-      return NextResponse.json({ error: "Forbidden: Invalid file path" }, { status: 403 });
-    }
-
-    if (!fs.existsSync(resolvedDiskPath)) {
-      return NextResponse.json({ error: "Physical file not found" }, { status: 404 });
-    }
-
-    const fileBuffer = fs.readFileSync(resolvedDiskPath);
+    const fileBuffer = await readMaterialFile(material.filePath);
     const safeFileName = material.name.replace(/["\r\n]/g, "_");
     const dispositionType = isDownload ? "attachment" : "inline";
 
-    return new Response(fileBuffer, {
+    return new Response(new Uint8Array(fileBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

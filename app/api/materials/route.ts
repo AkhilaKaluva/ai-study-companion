@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import fs from "fs";
-import path from "path";
+import { deleteMaterialFile } from "@/lib/storage";
 
 export async function DELETE(request: Request) {
   try {
@@ -41,19 +40,7 @@ export async function DELETE(request: Request) {
     }
 
     if (material.filePath) {
-      try {
-        const relativePath = material.filePath.startsWith("/")
-          ? material.filePath.slice(1)
-          : material.filePath;
-        const resolvedDiskPath = path.resolve(process.cwd(), "public", relativePath);
-        const publicDir = path.resolve(process.cwd(), "public");
-
-        if (resolvedDiskPath.startsWith(publicDir) && fs.existsSync(resolvedDiskPath)) {
-          fs.unlinkSync(resolvedDiskPath);
-        }
-      } catch (fileErr) {
-        console.warn("Could not delete physical file:", fileErr);
-      }
+      await deleteMaterialFile(material.filePath);
     }
 
     await prisma.material.delete({

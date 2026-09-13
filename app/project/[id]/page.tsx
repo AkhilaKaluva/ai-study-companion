@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
+import { upload } from "@vercel/blob/client";
 import {
   ArrowLeft,
   BookOpen,
@@ -246,44 +247,64 @@ export default function ProjectWorkspacePage({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 25 * 1024 * 1024) {
+      setUploadStatus("FAILED");
+      setUploadError("File size exceeds 25 MB limit.");
+      return;
+    }
+
     setUploading(true);
     setUploadError(null);
     setUploadStatus("UPLOADING");
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("projectId", projectId);
-
     try {
-      const res = await fetch("/api/materials/upload", {
-        method: "POST",
-        body: formData,
-      });
+      let uploadedMatId: string | undefined;
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Upload failed");
+      try {
+        const blob = await upload(file.name, file, {
+          access: "private",
+          handleUploadUrl: "/api/materials/upload",
+          clientPayload: JSON.stringify({ projectId }),
+        });
+        console.log("Direct Vercel Blob upload succeeded:", blob.url);
+      } catch (blobErr: any) {
+        console.warn("Direct Vercel Blob upload fallback:", blobErr?.message);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("projectId", projectId);
+
+        const res = await fetch("/api/materials/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Upload failed");
+        }
+        uploadedMatId = data.material?.id;
       }
 
-      const uploadedMatId = data.material?.id;
       setUploadStatus("PROCESSING");
       fetchProject();
-
-      if (!uploadedMatId) {
-        setUploadStatus("READY");
-        setUploading(false);
-        return;
-      }
 
       let attempts = 0;
       const maxAttempts = 60;
       const poll = async () => {
         attempts++;
         try {
-          const statusRes = await fetch(`/api/materials/status?materialId=${uploadedMatId}`);
+          const url = uploadedMatId
+            ? `/api/materials/status?materialId=${uploadedMatId}`
+            : `/api/materials/status?projectId=${projectId}`;
+
+          const statusRes = await fetch(url);
           if (statusRes.ok) {
             const statusData = await statusRes.json();
-            const mat = statusData.material;
+            let mat = statusData.material;
+            if (!mat && statusData.materials && statusData.materials.length > 0) {
+              mat = statusData.materials[0];
+            }
+
             if (mat?.status === "READY") {
               setPageCount(mat.pageCount);
               setUploadStatus("READY");
