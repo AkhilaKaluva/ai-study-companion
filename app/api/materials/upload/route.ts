@@ -116,7 +116,14 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
-  // 2. Fallback / Standard FormData upload (Local Development)
+  // 2. Fallback / Standard FormData upload (Local Development Only)
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    return NextResponse.json(
+      { error: "Direct Vercel Blob client upload is required in production environment." },
+      { status: 400 }
+    );
+  }
+
   try {
     const user = await getCurrentUser();
     if (!user) {

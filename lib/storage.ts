@@ -46,6 +46,10 @@ export async function saveMaterialFile(
     }
   }
 
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    throw new Error("Production PDF storage must use Vercel Blob storage.");
+  }
+
   const uploadDir = path.join(process.cwd(), "public", "uploads");
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
