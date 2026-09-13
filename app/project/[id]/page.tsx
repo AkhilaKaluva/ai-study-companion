@@ -260,38 +260,46 @@ export default function ProjectWorkspacePage({
     try {
       let uploadedMatId: string | undefined;
 
+      let blobUrl: string | undefined;
       try {
-        let blob: { url: string };
-        try {
-          blob = await uploadPresigned(file.name, file, {
-            access: "private",
-            handleUploadUrl: "/api/materials/upload",
-            clientPayload: JSON.stringify({ projectId }),
-          });
-        } catch {
-          blob = await upload(file.name, file, {
-            access: "private",
-            handleUploadUrl: "/api/materials/upload",
-            clientPayload: JSON.stringify({ projectId }),
-          });
-        }
-        console.log("Direct Vercel Blob upload succeeded:", blob.url);
-      } catch (blobErr: any) {
-        console.warn("Direct Vercel Blob upload fallback:", blobErr?.message);
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("projectId", projectId);
-
-        const res = await fetch("/api/materials/upload", {
-          method: "POST",
-          body: formData,
+        const blob = await uploadPresigned(file.name, file, {
+          access: "private",
+          handleUploadUrl: "/api/materials/upload",
+          clientPayload: JSON.stringify({ projectId }),
         });
+        blobUrl = blob.url;
+        console.log("Direct Vercel Blob presigned upload succeeded:", blobUrl);
+      } catch (presignedErr: any) {
+        try {
+          const blob = await upload(file.name, file, {
+            access: "private",
+            handleUploadUrl: "/api/materials/upload",
+            clientPayload: JSON.stringify({ projectId }),
+          });
+          blobUrl = blob.url;
+          console.log("Direct Vercel Blob client upload succeeded:", blobUrl);
+        } catch (uploadErr: any) {
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("Direct Vercel Blob upload fallback to local dev FormData:", uploadErr?.message || presignedErr?.message);
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("projectId", projectId);
 
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Upload failed");
+            const res = await fetch("/api/materials/upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+              throw new Error(data.error || "Upload failed");
+            }
+            uploadedMatId = data.material?.id;
+          } else {
+            const finalErrMessage = presignedErr?.message || uploadErr?.message || "Direct Vercel Blob upload failed.";
+            throw new Error(finalErrMessage);
+          }
         }
-        uploadedMatId = data.material?.id;
       }
 
       setUploadStatus("PROCESSING");

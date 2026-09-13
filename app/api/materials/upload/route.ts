@@ -47,6 +47,7 @@ export async function POST(request: Request): Promise<Response> {
             const safeName = `materials/${Date.now()}-${pathname.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
             const token = await issueSignedToken({
               pathname: safeName,
+              operations: ["put"],
               allowedContentTypes: ["application/pdf"],
               maximumSizeInBytes: 25 * 1024 * 1024,
               validUntil: Date.now() + 60 * 60 * 1000,
