@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
-import { upload } from "@vercel/blob/client";
+import { upload, uploadPresigned } from "@vercel/blob/client";
 import {
   ArrowLeft,
   BookOpen,
@@ -261,11 +261,20 @@ export default function ProjectWorkspacePage({
       let uploadedMatId: string | undefined;
 
       try {
-        const blob = await upload(file.name, file, {
-          access: "private",
-          handleUploadUrl: "/api/materials/upload",
-          clientPayload: JSON.stringify({ projectId }),
-        });
+        let blob: { url: string };
+        try {
+          blob = await uploadPresigned(file.name, file, {
+            access: "private",
+            handleUploadUrl: "/api/materials/upload",
+            clientPayload: JSON.stringify({ projectId }),
+          });
+        } catch {
+          blob = await upload(file.name, file, {
+            access: "private",
+            handleUploadUrl: "/api/materials/upload",
+            clientPayload: JSON.stringify({ projectId }),
+          });
+        }
         console.log("Direct Vercel Blob upload succeeded:", blob.url);
       } catch (blobErr: any) {
         console.warn("Direct Vercel Blob upload fallback:", blobErr?.message);

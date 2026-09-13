@@ -8,9 +8,10 @@ import path from "path";
  */
 export function isBlobStorageEnabled(): boolean {
   return Boolean(
-    process.env.BLOB_READ_WRITE_TOKEN ||
+    process.env.NODE_ENV === "production" ||
+    process.env.VERCEL ||
     process.env.BLOB_STORE_ID ||
-    process.env.VERCEL
+    process.env.BLOB_READ_WRITE_TOKEN
   );
 }
 
