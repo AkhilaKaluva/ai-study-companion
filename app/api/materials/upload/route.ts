@@ -285,7 +285,10 @@ export async function POST(request: Request): Promise<Response> {
     });
   } catch (err: any) {
     console.error("POST /api/materials/upload error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: err?.message || "Internal server error during upload." },
+      { status: 500 }
+    );
   }
 }
 

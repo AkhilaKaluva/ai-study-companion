@@ -30,10 +30,20 @@ export async function saveMaterialFile(
   const safeName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
   if (isBlobStorageEnabled()) {
-    const blob = await put(`materials/${safeName}`, buffer, {
-      access: "private",
-    });
-    return blob.url;
+    try {
+      const blob = await put(`materials/${safeName}`, buffer, {
+        access: "private",
+      });
+      return blob.url;
+    } catch (err: any) {
+      console.error("[Storage] Vercel Blob put error:", err);
+      if (err?.message?.includes("No blob credentials found")) {
+        throw new Error(
+          "Vercel Blob authentication failed: BLOB_READ_WRITE_TOKEN is missing or invalid. Please add BLOB_READ_WRITE_TOKEN in Vercel Project Settings -> Environment Variables."
+        );
+      }
+      throw err;
+    }
   }
 
   const uploadDir = path.join(process.cwd(), "public", "uploads");
@@ -58,15 +68,20 @@ export async function readMaterialFile(storedPath: string): Promise<Buffer> {
   }
 
   if (storedPath.startsWith("http://") || storedPath.startsWith("https://")) {
-    const res = await get(storedPath, { access: "private" });
-    if (!res || res.statusCode !== 200 || !res.stream) {
-      throw new Error("Failed to fetch file from private Blob storage");
+    try {
+      const res = await get(storedPath, { access: "private" });
+      if (!res || res.statusCode !== 200 || !res.stream) {
+        throw new Error("Failed to fetch file from private Blob storage");
+      }
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of res.stream as unknown as AsyncIterable<Uint8Array>) {
+        chunks.push(chunk);
+      }
+      return Buffer.concat(chunks);
+    } catch (err: any) {
+      console.error("[Storage] Vercel Blob read error:", err);
+      throw new Error(`Failed to read file from Vercel Blob: ${err?.message || err}`);
     }
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of res.stream as unknown as AsyncIterable<Uint8Array>) {
-      chunks.push(chunk);
-    }
-    return Buffer.concat(chunks);
   }
 
   const relativePath = storedPath.startsWith("/") ? storedPath.slice(1) : storedPath;
